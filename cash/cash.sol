@@ -177,7 +177,6 @@ contract PlasmaCash {
         exit.exitor.transfer(exitAmount);
         delete coins[_coinId];
         finalized = true;
-        break;
       }
       delete exits[_coinId][index];
     }
