@@ -61,8 +61,8 @@ contract PlasmaCash {
   payable {
     require(msg.value > 0, "Deposit amount should be > 0.");
     require(msg.sender != address(0), "Invalid sender address.");
-    coins[coidInd] = Coin(msg.sender, msg.value);
-    coinId = nonce.add(1);
+    coins[coinId] = Coin(msg.sender, msg.value);
+    coinId = coinId.add(1);
   }
 
   function submitBlock(bytes32 _merkleRoot, uint256 _blockIndex)
