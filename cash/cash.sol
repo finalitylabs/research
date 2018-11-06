@@ -97,6 +97,8 @@ contract PlasmaCash {
   public
   bonded
   payable {
+    Transaction memory transaction = decodeTransaction(_txBytes);
+
     validateTransaction(_txBytes, _proof, _signature, _spender, _targetBlock);
 
     require(exits[transaction.coinId][_targetBlock].finalAt == 0, "Exit exists.");
@@ -121,7 +123,7 @@ contract PlasmaCash {
   function challengeExit(bytes _txBytes, bytes _proof, bytes _signature, uint256 _targetBlock)
   public {
 
-    Transaction memory tx = decodeTransaction(_txBytes);
+    Transaction memory transaction = decodeTransaction(_txBytes);
 
     require(coins[transaction.coinId].amount > 0, "Coin does not exist.");
 
