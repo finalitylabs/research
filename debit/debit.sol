@@ -65,7 +65,10 @@ contract PlasmaDebit {
   payable {
     require(msg.value > 0, "Deposit amount should be > 0.");
     require(msg.sender != address(0), "Invalid sender address.");
-    channels[channelId] = Channel(msg.sender, msg.value);
+
+    // Amount & Capacity are equal when you create a Channel, then the operator
+    // add liquidity by extending the capacity. (See `extendCapacity`)
+    channels[channelId] = Channel(msg.sender, msg.value, msg.value);
     channelId = channelId.add(1);
   }
 
