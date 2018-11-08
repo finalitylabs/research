@@ -116,6 +116,9 @@ contract PlasmaDebit {
   payable {
     Transaction memory transaction = decodeTransaction(_txBytes);
 
+    require(channels[transaction.srcChannelId].amount > 0, "Source channel does not exist.");
+    require(channels[transaction.dstChannelId].amount > 0, "Destination channel does not exist.");
+
     validateTransaction(_txBytes, _srcProof, _dstProof, _src, _srcSignature, _dst, _dstSignature, _targetBlock);
 
     uint256 exitingChannelId = transaction.srcChannelId;
@@ -151,7 +154,8 @@ contract PlasmaDebit {
 
     Transaction memory transaction = decodeTransaction(_txBytes);
 
-    require(channels[transaction.srcChannelId].amount > 0, "Channel does not exist.");
+    require(channels[transaction.srcChannelId].amount > 0, "Source channel does not exist.");
+    require(channels[transaction.dstChannelId].amount > 0, "Destination channel does not exist.");
 
     uint256 prevTxBlockIndex = transaction.srcPrevTxBlockIndex;
     if(isDst)
