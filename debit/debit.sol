@@ -110,16 +110,19 @@ contract PlasmaDebit {
     createExit(_channelId, 0, channel.amount);
   }
 
-  function exitTransaction(bytes _txBytes, bytes _srcProof, bytes _dstProof, address _src, bytes _srcSignature, address _dst, bytes _dstSignature, uint256 _targetBlock, bool _isDst)
+  function exitTransaction(bytes _txBytes, bytes _srcProof, bytes _dstProof, bytes _srcSignature, bytes _dstSignature, uint256 _targetBlock, bool _isDst)
   public
   bonded
   payable {
     Transaction memory transaction = decodeTransaction(_txBytes);
 
-    require(channels[transaction.srcChannelId].amount > 0, "Source channel does not exist.");
-    require(channels[transaction.dstChannelId].amount > 0, "Destination channel does not exist.");
+    Channel memory srcChan = channels[transaction.srcChannelId];
+    Channel memory dstChan = channels[transaction.srcChannelId];
 
-    validateTransaction(_txBytes, _srcProof, _dstProof, _src, _srcSignature, _dst, _dstSignature, _targetBlock);
+    require(srcChan.amount > 0, "Source channel does not exist.");
+    require(dstChan.amount > 0, "Destination channel does not exist.");
+
+    validateTransaction(_txBytes, _srcProof, _dstProof, srcChan.owner, _srcSignature, dstChan.owner, _dstSignature, _targetBlock);
 
     uint256 exitingChannelId = transaction.srcChannelId;
     uint256 exitingAmount = transaction.srcNewBalance;
@@ -149,13 +152,16 @@ contract PlasmaDebit {
   }
 
 
-  function challengeExit(bytes _txBytes, bytes _proofSrc, bytes _proofDst, address _src, bytes _srcSignature, address _dst, bytes _dstSignature, uint256 _targetBlock, bool isDst)
+  function challengeExit(bytes _txBytes, bytes _proofSrc, bytes _proofDst, bytes _srcSignature, bytes _dstSignature, uint256 _targetBlock, bool isDst)
   public {
 
     Transaction memory transaction = decodeTransaction(_txBytes);
 
-    require(channels[transaction.srcChannelId].amount > 0, "Source channel does not exist.");
-    require(channels[transaction.dstChannelId].amount > 0, "Destination channel does not exist.");
+    Channel memory srcChan = channels[transaction.srcChannelId];
+    Channel memory dstChan = channels[transaction.srcChannelId];
+
+    require(srcChan.amount > 0, "Source channel does not exist.");
+    require(dstChan.amount > 0, "Destination channel does not exist.");
 
     uint256 prevTxBlockIndex = transaction.srcPrevTxBlockIndex;
     if(isDst)
@@ -167,7 +173,7 @@ contract PlasmaDebit {
 
     // We will allow users to challenge exit even after challenge time, until someone finalize it.
 
-    validateTransaction(_txBytes, _srcProof, _dstProof, _src, _srcSignature, _dst, _dstSignature, _targetBlock);
+    validateTransaction(_txBytes, _srcProof, _dstProof, srcChan.owner, _srcSignature, dstChan.owner, _dstSignature, _targetBlock);
 
     exit.invalid = true;
 
