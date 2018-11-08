@@ -38,14 +38,14 @@ contract PlasmaCash {
   // Mapping (coin-id, block-index) to its corresponsing Exit.
   mapping(uint256 => mapping(uint256 => Exit)) public exits;
 
-  // Because of the Solidity's limitation of iterating on maps, we should store
-  // occupied indices of each row of the exit matrix elsewhere (Sorted).
+  // Mapping (coin-id => blockIndex's) to facilitate looping through the exits mapping
+  mapping(uint256 => uint256[]) public exitQueue;
+
   // Traversing over all Exits of a coin:
   //
   // for(uint256 i = 0; i < exitQueue[id].length; i++) {
   //   Exit memory exit = exits[exitQueue[id][i]]
   // }
-  mapping(uint256 => uint256[]) public exitQueue;
 
   constructor() public {
     operator = msg.sender;
