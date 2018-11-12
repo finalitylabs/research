@@ -188,7 +188,9 @@ contract PlasmaCashflow {
     bytes32 h = hashTransaction(transaction);
 
     require(transaction.newOwner != _signer, "Preventing sending loop.");
-    require(_proof.verifyMerkleProof(blocks[_targetBlock].merkleRoot, h, transaction.coinId), "Incorrect merkle-proof.");
+
+    require(_proof.verifyMerkleSumTreeProof(blocks[_targetBlock].root, blocks[_targetBlock].count, h, transaction.coins), "Incorrect merkle-proof.");
+
     require(Transaction.verifySignature(_signer, h, _signature), "Incorrect signature.");
 
     return true;
