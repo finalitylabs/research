@@ -67,7 +67,7 @@ contract PlasmaCashflow {
   view
   returns (bool) {
     // Check if the coins exist.
-    if(_coins.start + _coins.offset >= coinsDeposited)
+    if(_coins.start + _coins.offset > coinsDeposited)
       return false;
 
     // Check if part/all of the coins are not exited yet.
