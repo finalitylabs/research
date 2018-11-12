@@ -160,6 +160,7 @@ contract PlasmaCashflow {
     require(!exit.invalid, "Already challenged.");
     require(exit.exitor != msg.sender, "You cant challenge yourself.");
 
+    require(transaction.prevBlockIndices.has(exit.blockIndex), "Your transaction should refer to the blockIndex of the Exit being challenged.");
     require(exit.coins.collidesWith(transaction.coins), "Your transaction and the exit being challenged should have collision with each other.");
 
     // We will allow users to challenge exit even after challenge time, until someone finalize it.
