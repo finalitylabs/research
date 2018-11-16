@@ -1,0 +1,23 @@
+{
+  "name": "research",
+  "version": "1.0.0",
+  "description": "Finality Research",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/finalitylabs/research.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/finalitylabs/research/issues"
+  },
+  "homepage": "https://github.com/finalitylabs/research#readme",
+  "dependencies": {
+    "bignumber.js": "^8.0.1",
+    "web3-utils": "^1.0.0-beta.36"
+  }
+}
