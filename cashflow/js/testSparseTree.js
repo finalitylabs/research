@@ -1,4 +1,4 @@
-const sparceMerkleTreeJS = require('./lib/SparseMerkleTree')
+const sparceMerkleTreeJS = require('./SparseMerkleTree')
 const leafValues = ["1a","2a","3a","4a","5a","6a","7a","8a","9a","10a"]
 const leafs = {};
 
