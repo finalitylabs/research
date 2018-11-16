@@ -1,7 +1,7 @@
-// Implementation by LoomNetwork: https://github.com/loomnetwork/plasma-cash/blob/master/server/test/SparseMerkleTree.js
-
+// utils.toBN is missing some methods used within this class (and the other way around), 
+// so the BigNumber.js library is also imported and used.
 const utils = require('web3-utils');
-const BN = require('bn.js');
+const BN = require('BigNumber.js');
 
 module.exports = class SparseMerkleTree {
     constructor(depth, leaves) {
@@ -40,14 +40,15 @@ module.exports = class SparseMerkleTree {
         for (let level = 0; level < depth; level++) {
             nextLevel = {};
             for(let index in treeLevel) {
-                halfIndex = web3.toBigNumber(index).dividedToIntegerBy(2).toString();
+                const indexBN = new BN(index)
+                halfIndex = indexBN.dividedToIntegerBy(2).toString();
                 value = treeLevel[index];
-                if (web3.toBigNumber(index).mod(2).isZero()) {
-                    let coIndex = web3.toBigNumber(index).add(1).toString();
+                if (indexBN.mod(2).isZero()) {
+                    let coIndex = utils.toBN(index).add(utils.toBN(1)).toString();
                     nextLevel[halfIndex] =
                         utils.soliditySha3(value, treeLevel[coIndex] || defaultNodes[level]);
                 } else {
-                    let coIndex = web3.toBigNumber(index).sub(1).toString();
+                    let coIndex = utils.toBN(index).sub(utils.toBN(1)).toString();
                     if (treeLevel[coIndex] === undefined) {
                           nextLevel[halfIndex] =
                             utils.soliditySha3(defaultNodes[level], value);
@@ -61,13 +62,13 @@ module.exports = class SparseMerkleTree {
     }
 
     createMerkleProof(uid) {
-        let index = web3.toBigNumber(uid)
+        let index = new BN(uid)
         let proof = '';
-        let proofbits = new BN(0);
+        let proofbits = utils.toBN(0);
         let siblingIndex;
         let siblingHash;
         for (let level=0; level < this.depth; level++) {
-            siblingIndex = index.mod(2).eq(0) ? index.add(1) : index.sub(1);
+            siblingIndex = index.mod(2).eq(0) ? utils.toBN(index).add(utils.toBN(1)) : utils.toBN(index).sub(utils.toBN(1));
             index = index.dividedToIntegerBy(2);
 
             siblingHash = this.tree[level][siblingIndex.toString()];
