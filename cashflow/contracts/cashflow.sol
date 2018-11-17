@@ -16,7 +16,7 @@ contract PlasmaCashflow {
 
   struct Transaction {
     CoinRange coins;
-    uint256[] prevTxBlockIndices;
+    uint256[] prevTxBlockIndices; // Are these all blocks that have transacted this range?
     address newOwner;
   }
 
@@ -25,7 +25,7 @@ contract PlasmaCashflow {
   struct Block {
     bytes32 root; // Hash of the Merkle-Sum-Tree.
     uint256 count; // Size of the Merkle-Sum-Tree. (Number of coins deposited till this block)
-    uint256 timestamp; // block.timestamp when this block was submitted.
+    uint256 timestamp; // is this needed? can the client get this from event logs
   }
   // Number of blocks submitted.
   uint256 public height;
