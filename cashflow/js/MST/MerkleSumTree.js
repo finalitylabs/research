@@ -1,5 +1,8 @@
-const utils = require('web3-utils');
-const Int64BE = require("int64-buffer").Int64BE;
+const utils = require('web3-utils')
+const Int64BE = require("int64-buffer").Int64BE
+const BN = require('bignumber.js')
+const util = require('util')
+const fs = require('fs')
 
 const encode = (data) => {
   const encoded = Int64BE(data)
@@ -43,12 +46,12 @@ class ProofStep {
 
 class MerkleSumTree {
   constructor(leaves) {
-    this.checkConsecutive(leaves);
+    this.checkConsecutive(leaves)
 
     this.buckets = leaves.map(leaf => leaf.getBucket())
-    let buckets = this.buckets
-    while (buckets.length !== 1) {
-      const newBuckets = [];
+    var buckets = this.buckets.slice()
+    while (buckets.length != 1) {
+      const newBuckets = []
       while (buckets.length > 0) {
         if (buckets.length >= 2) {
           const b1 = buckets.pop(0)
@@ -61,7 +64,7 @@ class MerkleSumTree {
           b2.left = b1
           newBuckets.push(b)
         } else {
-          newBuckets.push(buckets.pop(0))
+          newBuckets.push(buckets.pop())
         }
       }
       buckets = newBuckets
@@ -85,8 +88,9 @@ class MerkleSumTree {
     var curr = this.buckets[index]
     const proof = []
     while (curr.parent) {
+      console.log(`bucket ${curr.hashed} has right? ${curr.right} bucket has left? ${curr.left} and size = ${curr.size}`)
       const right = curr.right ? true : false
-      const bucket = right ? right : curr.left
+      const bucket = curr.right ? curr.right : curr.left
       curr = curr.parent
       proof.push(new ProofStep(bucket, right))
     }
@@ -96,27 +100,31 @@ class MerkleSumTree {
   verifyProof(root, leaf, proof) {
     // Validates the supplied `proof` for a specific `leaf` according to the
     // `root` bucket of Merkle-Sum-Tree.
-    const sizeArr = proof.map(s => s.bucket.size ? s.bucket.size : s.right)
-    const rng = [sum(sizeArr), (root.size - sum(sizeArr))]
+
+    const leftProofStepArr = proof.map(s => !s.right ? s.bucket.size : 0)
+    const rightProofStepArr = proof.map(s => s.right ? s.bucket.size : 0)
+
+    const rng = [this.sum(leftProofStepArr), (root.size - this.sum(rightProofStepArr))]
     // Supplied steps are not routing us to the range specified.
-    if (rng !== leaf.rng) return false
-    curr = leaf.getBucket()
-    for (step in proof) {
+    if ((rng[1] - rng[0]) !== (leaf.rng[1] - leaf.rng[0])) return false // TODO: this needs to be an arr comparison, right now the range arrays are never equal
+    let curr = leaf.getBucket()
+    
+    var hashed;
+    proof.forEach(step => {
       if (step.right) {
         hashed = utils.soliditySha3(encode(curr.size) + curr.hashed + encode(step.bucket.size) + step.bucket.hashed)
       } else {
         hashed = utils.soliditySha3(encode(step.bucket.size) + step.bucket.hashed + encode(curr.size) + curr.hashed)
       }
-      curr = Bucket(curr.size + step.bucket.size, hashed)
-    }
+      curr = new Bucket(curr.size + step.bucket.size, hashed)
+    })
+
     return curr.size == root.size && curr.hashed == root.hashed
   }
 
   sum(arr) {
-    var result = 0, n = arr.length || 0; //may use >>> 0 to ensure length is Uint32
-    while(n--) {
-      result += +arr[n]; // unary operator to ensure ToNumber conversion
-    }
+    let result = 0
+    arr.forEach(d => {result += d})
     return result;
   }
 }
