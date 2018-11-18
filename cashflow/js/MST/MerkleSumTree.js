@@ -1,17 +1,16 @@
 const utils = require('web3-utils')
 const Int64BE = require("int64-buffer").Int64BE
 const BN = require('bignumber.js')
-const util = require('util')
-const fs = require('fs')
 
 const encode = (data) => {
   const encoded = Int64BE(data)
   return encoded
 }
 
-const decode = (data) => {
-  const decoded = data.toNumber()
-  return decoded
+const sum = (arr) => {
+  let result = 0
+  arr.forEach(d => {result += d})
+  return result;
 }
 
 class Bucket {
@@ -54,8 +53,8 @@ class MerkleSumTree {
       const newBuckets = []
       while (buckets.length > 0) {
         if (buckets.length >= 2) {
-          const b1 = buckets.pop(0)
-          const b2 = buckets.pop(0)
+          const b1 = buckets.shift()
+          const b2 = buckets.shift()
           const size = b1.size + b2.size
           const hashed = utils.soliditySha3(encode(b1.size) + b1.hashed + encode(b2.size) + b2.hashed)
           const b = new Bucket(size, hashed)
@@ -88,7 +87,6 @@ class MerkleSumTree {
     var curr = this.buckets[index]
     const proof = []
     while (curr.parent) {
-      console.log(`bucket ${curr.hashed} has right? ${curr.right} bucket has left? ${curr.left} and size = ${curr.size}`)
       const right = curr.right ? true : false
       const bucket = curr.right ? curr.right : curr.left
       curr = curr.parent
@@ -100,13 +98,12 @@ class MerkleSumTree {
   verifyProof(root, leaf, proof) {
     // Validates the supplied `proof` for a specific `leaf` according to the
     // `root` bucket of Merkle-Sum-Tree.
-
     const leftProofStepArr = proof.map(s => !s.right ? s.bucket.size : 0)
     const rightProofStepArr = proof.map(s => s.right ? s.bucket.size : 0)
-
-    const rng = [this.sum(leftProofStepArr), (root.size - this.sum(rightProofStepArr))]
+    const rng = [sum(leftProofStepArr), (root.size - sum(rightProofStepArr))]    
+    
     // Supplied steps are not routing us to the range specified.
-    if ((rng[1] - rng[0]) !== (leaf.rng[1] - leaf.rng[0])) return false // TODO: this needs to be an arr comparison, right now the range arrays are never equal
+    if (rng[0] !== leaf.rng[0] || rng[1] !== leaf.rng[1]) return false // TODO: this needs to be an arr comparison, right now the range arrays are never equal
     let curr = leaf.getBucket()
     
     var hashed;
@@ -120,12 +117,6 @@ class MerkleSumTree {
     })
 
     return curr.size == root.size && curr.hashed == root.hashed
-  }
-
-  sum(arr) {
-    let result = 0
-    arr.forEach(d => {result += d})
-    return result;
   }
 }
 
