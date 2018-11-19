@@ -41,7 +41,7 @@ class ProofStep {
     this.bucket = bucket
     this.right = right // Whether the bucket hash should be appended on the right side in this step (Default is left)
   }
-}       
+}
 
 class MerkleSumTree {
   constructor(leaves) {
@@ -56,7 +56,11 @@ class MerkleSumTree {
           const b1 = buckets.shift()
           const b2 = buckets.shift()
           const size = b1.size + b2.size
-          const hashed = utils.soliditySha3(encode(b1.size) + b1.hashed + encode(b2.size) + b2.hashed)
+          const hashed = utils.soliditySha3(
+            {type: "uint64", value: b1.size},
+            {type: "bytes32", value: b1.hashed},
+            {type: "uint64", value: b2.size},
+            {type: "bytes32", value: b2.hashed});
           const b = new Bucket(size, hashed)
           b1.parent = b2.parent = b
           b1.right = b2
@@ -96,22 +100,31 @@ class MerkleSumTree {
   }
 
   verifyProof(root, leaf, proof) {
+
     // Validates the supplied `proof` for a specific `leaf` according to the
     // `root` bucket of Merkle-Sum-Tree.
     const leftProofStepArr = proof.map(s => !s.right ? s.bucket.size : 0)
     const rightProofStepArr = proof.map(s => s.right ? s.bucket.size : 0)
-    const rng = [sum(leftProofStepArr), (root.size - sum(rightProofStepArr))]    
-    
+    const rng = [sum(leftProofStepArr), (root.size - sum(rightProofStepArr))]
+
     // Supplied steps are not routing us to the range specified.
     if (rng[0] !== leaf.rng[0] || rng[1] !== leaf.rng[1]) return false // TODO: this needs to be an arr comparison, right now the range arrays are never equal
     let curr = leaf.getBucket()
-    
+
     var hashed;
     proof.forEach(step => {
       if (step.right) {
-        hashed = utils.soliditySha3(encode(curr.size) + curr.hashed + encode(step.bucket.size) + step.bucket.hashed)
+        hashed = utils.soliditySha3(
+                  {type: "uint64", value: curr.size},
+                  {type: "bytes32", value: curr.hashed},
+                  {type: "uint64", value: step.bucket.size},
+                  {type: "bytes32", value: step.bucket.hashed});
       } else {
-        hashed = utils.soliditySha3(encode(step.bucket.size) + step.bucket.hashed + encode(curr.size) + curr.hashed)
+        hashed = utils.soliditySha3(
+                  {type: "uint64", value: step.bucket.size},
+                  {type: "bytes32", value: step.bucket.hashed},
+                  {type: "uint64", value: curr.size},
+                  {type: "bytes32", value: curr.hashed});
       }
       curr = new Bucket(curr.size + step.bucket.size, hashed)
     })
