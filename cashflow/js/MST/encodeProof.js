@@ -1,13 +1,7 @@
+const pad = require("pad-left")
 
-const bytesFromHex = (str,pad) =>{
-  str = str.toString()
-  if (str.length%2) str="0"+str;
-  var bytes = str.match(/../g).map(function(s){
-      console.log(s)
-      return parseInt(s,16);
-  });
-  if (pad) for (var i=bytes.length;i<pad;++i) bytes.unshift(0);
-  return bytes.toString().replace(/,/g, '');
+const encode = (data) => {
+  return pad(data.toString(16), 16,'0')
 }
 
 const encodeProof = (proof) => {
@@ -21,13 +15,11 @@ const encodeProof = (proof) => {
     } else {
       proofBytes += left
     }
-    const sizeArr = bytesFromHex(d.bucket.size, 16)
+    const sizeArr = encode(d.bucket.size)
     proofBytes += sizeArr
     proofBytes += d.bucket.hashed.substring(2)
   })                         
 
-  "0x000000000000000005efbde2c3aee204a69b7696d4b10ff31137fe78e3946306284f806e2dfc68b8050000000000000000016dc1f2cbadf3cf42e13fed7a5bc239fe828329bb0dd8ef456bed7ab94dec6c598010000000000000011289d7cdd4e64c94f59c5d4c7db419624f7f097c889a5cbdc59980a7fb83733fac7"
-  "0x000000000000000005efbde2c3aee204a69b7696d4b10ff31137fe78e3946306284f806e2dfc68b80500000000000000000adc1f2cbadf3cf42e13fed7a5bc239fe828329bb0dd8ef456bed7ab94dec6c5980100000000000000b49d7cdd4e64c94f59c5d4c7db419624f7f097c889a5cbdc59980a7fb83733fac7"
   return proofBytes
 }
 

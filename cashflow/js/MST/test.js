@@ -14,11 +14,11 @@ const leaves = [
 ]
     
 const tree = new MerkleSumTree(leaves)
-// const root = tree.getRoot()
+const root = tree.getRoot()
 const proof = tree.getProof(3)
-const encodedProof = encodeProof(proof)
-// if (tree.verifyProof(root, leaves[3], proof)) {
-//     console.log("Proof is valid!")
-// } else {
-//     console.log("Proof is not valid!")
-// }
+
+if (tree.verifyProof(root, leaves[3], proof)) {
+    console.log("Proof is valid!")
+} else {
+    console.log("Proof is not valid!")
+}
