@@ -1,8 +1,10 @@
-// var EC = artifacts.require("./ECTools.sol");
-// var LC = artifacts.require("./LedgerChannel.sol");
+var MerkleSumTree = artifacts.require("./MerkleSumTree.sol")
+var MSTImplementation = artifacts.require("./MSTImplementation.sol")
 
-module.exports = async function(deployer) {
-  // deployer.deploy(EC);
-  // deployer.link(EC, LC);
-  // deployer.deploy(LC);
+module.exports = function (deployer) {
+  deployer.deploy(MerkleSumTree).then(() => {
+      deployer.deploy(MSTImplementation);
+  });
+  deployer.link(MerkleSumTree, MSTImplementation);
 };
+
