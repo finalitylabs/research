@@ -19,9 +19,10 @@ const leaves = [
 //   await tryCatch(personalToken.mintPersonalToken(account1, tokenUri1, {from: accounts[1], value: fee}), errTypes.revert);
 // - Async assert equal: 
 //   expect(await asyncFunction.to.equal(symbol);
+// - Assert equal for two values:
+//   assert.equal(metaCoinEthBalance, 2 * metaCoinBalance, "Library function returned unexpected function, linkage may be broken");
 
 contract('Tests for the Merklesumtree implementation', (accounts) => {
-  const account = accounts[0]
   const treeJs = new MerkleSumTreeJs(leaves);
   const proof = treeJs.getProof(3)
   const leaf = leaves[3]
@@ -37,9 +38,8 @@ contract('Tests for the Merklesumtree implementation', (accounts) => {
     const verified = await TreeSol.verify(
       encodedProof, 
       root.hashed, root.size,
-      leaf.hashed, leaf.rng[0], leaf.rng[1]
+      leaf.getBucket().hashed, leaf.rng[0], leaf.rng[1]
     )
-    expect(verified.to.equal(true))
-    console.log(verified)
+    assert.equal(verified, true, "Wrong proof");
   })
 });
