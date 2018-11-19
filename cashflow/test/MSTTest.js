@@ -2,7 +2,7 @@ const tryCatch = require("./exceptions.js").tryCatch;
 const errTypes = require("./exceptions.js").errTypes;
 const MerkleSumTreeJs = require('./../js/MST/MerkleSumTree').MerkleSumTree
 const Leaf = require('./../js/MST/MerkleSumTree').Leaf
-// const encodeProof = require('./../js/MST/encodeProof')
+const encodeProof = require('./../js/MST/encodeProof')
 
 const MerkleSumTreeSol = artifacts.require("MerkleSumTree")
 
@@ -32,17 +32,14 @@ contract('Tests for the Merklesumtree implementation', (accounts) => {
   })
 
   it('should be able to verify the proof provided by the JS merkle tree after encoding it', async () => {
-    console.log(proof)
-    // const TreeSol = await MerkleSumTreeSol.new()
-    // const encodedProof = encodeProof(proof)
-    // const verified = await TreeSol.verifyProof(
-    //   encodedProof, 
-    //   root.hashed, 
-    //   root.size,leaf.hashed, 
-    //   leaf.rng[0], 
-    //   leaf.rng[1]
-    // )
-    // expect(verified.to.equal(true))
-    // console.log(verified)
+    const TreeSol = await MerkleSumTreeSol.deployed()
+    const encodedProof = encodeProof(proof)
+    const verified = await TreeSol.verify(
+      encodedProof, 
+      root.hashed, root.size,
+      leaf.hashed, leaf.rng[0], leaf.rng[1]
+    )
+    expect(verified.to.equal(true))
+    console.log(verified)
   })
 });
