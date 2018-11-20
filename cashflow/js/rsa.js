@@ -1,8 +1,27 @@
 'use strict'
 
+var bigInt = require("big-integer")
+
 // TODO Wesolowski proof of exponent knowledge scheme
 
-var bigInt = require("big-integer")
+// for generator g, element to be proven included/excluded v
+// let x = cofactor of v
+// let h = g^v, z = h^x
+// B = hash(h,z) mod N
+// b = h^floor(x/B)
+// r = x mod B
+//
+// proof of exponent knowledge = (b, z)
+// verification: 
+// b^B * h^r = z
+// z = h^B*floor(x/B)+x mod B = h^x
+//
+// exclusion proof ov v in [g....A]
+// prove r is known for 0 < r < v where A * g^r is a know power of g^v
+// ie
+// prove 7 is not a part of [g...A]
+// let r = 3 (check) 0 < 3 < 7
+// 
 
 let g = 3 // empty accumulator
 let p = 32416190039
