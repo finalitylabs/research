@@ -1,6 +1,7 @@
 'use strict'
 
-var bigInt = require("big-integer")
+const bigInt = require("big-integer")
+const utils = require('web3-utils')
 
 // TODO Wesolowski proof of exponent knowledge scheme
 
@@ -23,7 +24,7 @@ var bigInt = require("big-integer")
 // let r = 3 (check) 0 < 3 < 7
 // 
 
-let g = 3 // empty accumulator
+let g = bigInt(3) // empty accumulator
 let p = 32416190039
 let q = 32416187761
 let N = bigInt(p*q) // don't do this in practice, find private pq
@@ -73,6 +74,47 @@ x = bigInt(2*3*5*11*13*17*19*23*29*31*37)
 console.log(isContained(bigInt(7), A, x)) // true
 
 
+// wesoloski proof of exponentiation
+// V1
+// let h=g^v, z=h^x, B=hash(h,z)modN
+// b=h^floor(x/B)
+// r=xmodB
+// proof=(b,z,r)
+// check b^B*h^r=z and b^B*h^r=h^B*floor(x/B)+xmodB
+
+// or
+// V2
+// h=g^vmodN, B=hash(g,A,h), b=h^floor(x/B), r=xmodB
+// proof = (b,r)
+// check b^B*h^r = AmodN
+
+let a = 19 // new v, element to get inclusion proof on
+// V2 setup
+// let h = g.modPow(a, N)
+
+// let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(),A.toString(), h.toString()))).mod(N)
+// // B may be 64bytes and too big to store in web3 BN
+// let b = h.pow(x.divide(B))
+// let r = x.mod(B)
+
+// let proof = {b:b,r:r}
+//console.log(b.pow(B).multiply(h.pow(r)))
+
+// V1 setup
+let h = g.pow(a)
+let z = h.pow(x)
+let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(),A.toString(), h.toString()))).mod(N)
+
+
+console.log(h.toString())
+console.log(r.toString())
+console.log(x.toString())
+console.log(B.toString())
+console.log(x.divide(B).toString())
+console.log(b.toString())
+
+
+
 function addElement(element, accumulator) {
   console.log('adding element: '+element+' to accumulator: '+accumulator)
   return accumulator.modPow(element, N)
@@ -92,7 +134,13 @@ function isContained(element, accumulator, cofactor) {
   return res.equals(accumulator)
 }
 
-function getInclusionProof(element, block){
+function verifyCofactor(proof, v, A){
+  return proof.b.pow()
+}
+// generate an inclusion proof for a single given element
+// uses wesoloski proof of exponentiation so that recipients 
+// of the proof don't need to witness the entire [g...A]
+function getInclusionProof(element, block, accumulator){
 
 }
 
