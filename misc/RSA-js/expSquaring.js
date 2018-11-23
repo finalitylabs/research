@@ -44,13 +44,10 @@
 // x^4 * x^4 = x^8
 
 
-function fastPow(x, n) {
-  // let str = b.toString()
-  // let bin = (+str).toString(2)
-  // return bin
+function fastPow(x, n, N) {
   if(n.equals(1)) return x
-  if(n.mod(2).equals(0)) return fastPow(x.multiply(x), n.divide(2))
-  return x.multiply(fastPow(x.multiply(x), n.divide(2)))
+  if(n.mod(2).equals(0)) return fastPow(x.modPow(2, N), n.divide(2), N)
+  return x.multiply(fastPow(x.modPow(2, N), n.divide(2), N))
 }
 
 module.exports.fastPow=fastPow

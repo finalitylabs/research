@@ -3,10 +3,13 @@
 const fastPow = require('./expSquaring').fastPow
 const b = require("big-integer")
 
-let a = b(123213123)
-a.pow(213213123123213)
+let p = 32416190039
+let q = 32416187761
+let N = b(p*q)
 
-let t = fastPow(b(1234), b(1060))
+console.log(N)
+
+let t = fastPow(b(1162261467), b(1060105447830), N)
 console.log(t)
 
 
