@@ -22,12 +22,11 @@ const utils = require('web3-utils')
 // ie
 // prove 7 is not a part of [g...A]
 // let r = 3 (check) 0 < 3 < 7
-// 
 
 let g = bigInt(3) // empty accumulator
-let p = 32416190039
-let q = 32416187761
-let N = bigInt(p*q) // don't do this in practice, find private pq
+let p = bigInt(32416190039)
+let q = bigInt(32416187761)
+let N = bigInt(p.multiply(q)) // don't do this in practice, find private pq
 
 let U = 2*3*5*7 // 210
 let A = bigInt(g).modPow(U,N)
@@ -53,26 +52,56 @@ console.log(isContained(bigInt(11), A, x)) // false
 
 A = addElement(bigInt(11), A)
 
-x = bigInt(2*3*5*7) // adjust cofactor
+x = bigInt(2*5*3*7) // adjust cofactor
 console.log(isContained(bigInt(11), A, x)) // true
 
 
-A = addElement(bigInt(13), A)
 A = addElement(bigInt(17), A)
+A = addElement(bigInt(13), A)
 A = addElement(bigInt(19), A)
 A = addElement(bigInt(23), A)
+A = addElement(bigInt(104849), A)
+A = addElement(bigInt(16369), A)
+A = addElement(bigInt(29), A)
+A = addElement(bigInt(1300931), A)
+A = addElement(bigInt('32416187899'), A)
+A = addElement(bigInt('32416188517'), A)
+A = addElement(bigInt('32416188647'), A)
+A = addElement(bigInt('32416189391'), A)
+A = addElement(bigInt('32416189459'), A)
+A = addElement(bigInt('32416189469'), A)
+
+console.log(A.toString())
 
 // prove 3 is in the accumulator
-x = bigInt(2*5*7*11*13*17*19*23)
+x = bigInt(2)
+  .multiply(5)
+  .multiply(7)
+  .multiply(11)
+  .multiply(13)
+  .multiply(17)
+  .multiply(19)
+  .multiply(23)
+  .multiply(104849)
+  .multiply(16369)
+  .multiply(29)
+  .multiply(1300931)
+  .multiply('32416187899')
+  .multiply('32416188517')
+  .multiply('32416188647')
+  .multiply('32416189391')
+  .multiply('32416189459')
+  .multiply('32416189469')
+
 console.log(isContained(bigInt(3), A, x)) // true
 
-// add multiple txs to the accumulator
-let txlist = [bigInt(29), bigInt(31), bigInt(37)]
+// // add multiple txs to the accumulator
+// let txlist = [bigInt(29), bigInt(31), bigInt(37)]
 
-A = addElements(txlist, A)
-// prove 7 is in the accumulator
-x = bigInt(2*3*5*11*13*17*19*23*29*31*37)
-console.log(isContained(bigInt(7), A, x)) // true
+// A = addElements(txlist, A)
+// // prove 7 is in the accumulator
+// x = bigInt(2*3*5*11*13*17*19*23*29*31*37*104849)
+// console.log(isContained(bigInt(7), A, x)) // true
 
 
 // wesoloski proof of exponentiation
@@ -89,30 +118,39 @@ console.log(isContained(bigInt(7), A, x)) // true
 // proof = (b,r)
 // check b^B*h^r = AmodN
 
-let a = 19 // new v, element to get inclusion proof on
+let a = 3 // new v, element to get inclusion proof on
 //V2 setup
 let h = g.modPow(a, N)
 
 let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(),A.toString(), h.toString())))
 // B may be 64bytes and too big to store in web3 BN
-let b = h.pow(x.divide(B))
+//let b = h.pow(x.divide(B))
+let b = h.modPow(x.divide(B), N)
 let r = x.mod(B)
 
 let proof = {b:b,r:r}
-let z = b.pow(B)
-//let c = h.pow(r)
+console.log(verifyCofactor(proof, a, A))
+console.log(proof
+  )
+// let z = b.modPow(B, N)
+// let c = h.modPow(r, N)
 
-// //V1 setup
-// let h = g.pow(a)
-// let z = h.pow(x)
-// let B = bigInt(utils.hexToNumberString(utils.sha3(h.toString()))).mod(N)
+// let c1 = z.multiply(c).mod(N)
+// let c2 = A.mod(N)
+
+// // //V1 setup
+// // let h = g.pow(a)
+// // let z = h.pow(x)
+// // let B = bigInt(utils.hexToNumberString(utils.sha3(h.toString()))).mod(N)
 
 
-console.log(h.toString())
-console.log(r.toString())
-console.log(x.toString())
-console.log(B.toString())
-console.log(b.toString())
+// console.log(h.toString())
+// console.log(r.toString())
+// console.log(x.toString())
+// console.log(B.toString())
+// console.log(b.toString())
+// console.log(c1.toString())
+// console.log(c2.toString())
 
 
 
@@ -127,16 +165,26 @@ function addElements(elements, accumulator) {
   for(var i=0; i<elements.length; i++) {
     accumElems = accumElems.multiply(elements[i])
   }
-  return accumulator.modPow(accumElems, N)
+  return accumulator.modPow(accumElems.toString(), N.toString())
 }
 
 function isContained(element, accumulator, cofactor) {
-  let res = bigInt(g).modPow(element.multiply(cofactor), N)
-  return res.equals(accumulator)
+  let res = g.modPow(element.multiply(cofactor).toString(), N.toString())
+  // console.log(element.multiply(cofactor).toString())
+  // console.log(N.toString())
+  // console.log(res.toString())
+  return res.equals(accumulator.toString())
 }
 
 function verifyCofactor(proof, v, A){
-  return proof.b.pow()
+  let h = g.modPow(v, N)
+  let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(), A.toString(), h.toString())))
+  let z = proof.b.modPow(B, N)
+  let c = h.modPow(proof.r, N)
+
+  let c1 = z.multiply(c).mod(N)
+  let c2 = A.mod(N)
+  return c1.equals(c2)
 }
 // generate an inclusion proof for a single given element
 // uses wesoloski proof of exponentiation so that recipients 
