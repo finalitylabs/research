@@ -73,8 +73,9 @@ A = addElement(bigInt('32416189469'), A)
 
 console.log(A.toString())
 
-// prove 3 is in the accumulator
+// prove 29 is in the accumulator
 x = bigInt(2)
+  .multiply(3)
   .multiply(5)
   .multiply(7)
   .multiply(11)
@@ -84,7 +85,7 @@ x = bigInt(2)
   .multiply(23)
   .multiply(104849)
   .multiply(16369)
-  .multiply(29)
+   //
   .multiply(1300931)
   .multiply('32416187899')
   .multiply('32416188517')
@@ -93,8 +94,42 @@ x = bigInt(2)
   .multiply('32416189459')
   .multiply('32416189469')
 
-console.log(isContained(bigInt(3), A, x)) // true
 
+console.log(isContained(bigInt(29), A, x)) // true
+
+
+let A2 = A
+A2 = addElement(bigInt(101), A2)
+A2 = addElement(bigInt(103), A2)
+A2 = addElement(bigInt(107), A2)
+A2 = addElement(bigInt(29), A2)
+
+let x2 = bigInt(103)
+  .multiply(107)
+  .multiply(101)
+  .multiply(29)
+  //.multiply(29)
+  
+x2 = x2.multiply(x)
+
+x = x.multiply(103)
+  .multiply(107)
+  .multiply(101)
+  .multiply(29)
+  //.multiply(29)
+
+
+console.log(x2.toString())
+
+let _A2 = A.modPow(x2, N)
+
+//x2 = A.modPow(_A2, N)
+console.log(x2.toString())
+console.log(A.toString())
+
+console.log(isContained(bigInt(29), A2, x2)) // true
+console.log(x.toString())
+console.log(N.toString())
 // // add multiple txs to the accumulator
 // let txlist = [bigInt(29), bigInt(31), bigInt(37)]
 
@@ -118,20 +153,20 @@ console.log(isContained(bigInt(3), A, x)) // true
 // proof = (b,r)
 // check b^B*h^r = AmodN
 
-let a = 3 // new v, element to get inclusion proof on
+let a = 29 // new v, element to get inclusion proof on
 //V2 setup
 let h = g.modPow(a, N)
 
-let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(),A.toString(), h.toString())))
+let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(),A2.toString(), h.toString())))
 // B may be 64bytes and too big to store in web3 BN
 //let b = h.pow(x.divide(B))
 let b = h.modPow(x.divide(B), N)
 let r = x.mod(B)
 
 let proof = {b:b,r:r}
-console.log(verifyCofactor(proof, a, A))
-console.log(proof
-  )
+
+console.log(verifyCofactor(proof, a, A2))
+//console.log(proof)
 // let z = b.modPow(B, N)
 // let c = h.modPow(r, N)
 
@@ -152,11 +187,12 @@ console.log(proof
 // console.log(c1.toString())
 // console.log(c2.toString())
 
-
+let _p = getInclusionProof(bigInt(29), 0, A2)
+console.log(verifyCofactor(_p, a, A2))
 
 function addElement(element, accumulator) {
-  console.log('adding element: '+element+' to accumulator: '+accumulator)
-  return accumulator.modPow(element, N)
+  console.log('adding element: '+element+' to accumulator: '+accumulator.toString())
+  return accumulator.modPow(element.toString(), N.toString())
 }
 
 function addElements(elements, accumulator) {
@@ -186,13 +222,38 @@ function verifyCofactor(proof, v, A){
   let c2 = A.mod(N)
   return c1.equals(c2)
 }
+
+// as per Xuanji's suggestion, let's keep x local to the operator, 
 // generate an inclusion proof for a single given element
 // uses wesoloski proof of exponentiation so that recipients 
 // of the proof don't need to witness the entire [g...A]
-function getInclusionProof(element, block, accumulator){
+// currently only works for a prime included once
+function getInclusionProof(v, block, _A){
+  let h = g.modPow(v, N)
+  let B = bigInt(utils.hexToNumberString(utils.soliditySha3(g.toString(),_A.toString(), h.toString())))
+  // get cofactor somehow, perhaps check full tx records of request A range and... or
+  // compute x given (g, A, v). Can't do this given mod N
+  // grab transactions and generate x
 
+  let _x = generateCofactor(0, 1)
+
+  let b = h.modPow(x.divide(B), N)
+  let r = x.mod(B)
+  return {b:b,r:r}
 }
 
 function getExclusionProof(element, blockRange) {
 
+}
+
+function generateCofactor(startBlock, endBlock) {
+  // todo, grab stored transactions to generate cofactor
+  return x
+}
+
+// js Math.log return the ln(x) we must convert
+// log_b(x) = ln(x) / ln(b)
+function logB(val, b) {
+  console.log('log A = ' + Math.log(val) / Math.log(b))
+  return Math.round(Math.log(val) / Math.log(b))
 }
