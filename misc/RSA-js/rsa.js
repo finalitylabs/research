@@ -229,8 +229,8 @@ function getInclusionProof(v, block, _A){
 
   let _x = getCofactor(0, 1)
 
-  let b = h.modPow(x.divide(B), N)
-  let r = x.mod(B)
+  let b = h.modPow(_x.divide(B), N)
+  let r = _x.mod(B)
   return {b:b,r:r}
 }
 
@@ -316,9 +316,7 @@ class RSAaccumulator {
     // get cofactor somehow, perhaps check full tx records of request A range and... or
     // compute x given (g, A, v). Can't do this given mod N
     // grab transactions and generate x
-
     let _x = this._getCofactor(v, s, e)
-
     let b = h.modPow(_x.divide(B), this.N)
     let r = _x.mod(B)
     return {b:b,r:r,A:this.blocks[e][0]}
