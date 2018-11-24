@@ -6,6 +6,10 @@ def mult(primes):
         ret *= p
     return ret
 
+def hasher(data):
+    import hashlib
+    return int.from_bytes(hashlib.sha256(str(data).encode('ascii')).digest(), byteorder='big')
+
 class AccumulatorChain:
     def __init__(self, g, n):
         self.n = n
@@ -19,11 +23,18 @@ class AccumulatorChain:
         print(self.blocks,self.accums)
 
     def get_inclusion_proof(self, block, prime):
-        b = set(self.blocks[block])
-        if prime not in b:
+        primes = set(self.blocks[block])
+        g = self.accums[block - 1]
+        A = self.accums[block]
+        if prime not in primes:
             raise Exception("Prime {} does not exist in block {}!".format(prime,block))
-        b.remove(prime)
-        return mult(b)
+        primes.remove(prime)
+        x = mult(primes)
+        h = g ** prime
+        B = hasher(g * A)
+        b = pow(h, x // B, self.n)
+        r = x % B
+        return (b, r)
 
     def get_exclusion_proofs(self, block, count, prime):
         blocks = self.blocks[block:block+count]
@@ -35,9 +46,11 @@ class AccumulatorChain:
         cofactor = (m + r) // prime
         return (r, cofactor)
 
-    def verify_inclusion_proof(prev_acc, acc, n, prime, proof):
-        result = pow(prev_acc, prime * proof, n)
-        return result == acc
+    def verify_inclusion_proof(g, A, n, prime, proof):
+        b, r = proof
+        h = g ** prime
+        B = hasher(g * A)
+        return (pow(b, B, n) * pow(h, r, n)) % n == A
 
     def verify_exclusion_proof(prev_acc, acc, n, prime, r, cofactor):
         if r >= prime or r < 0:
