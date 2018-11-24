@@ -15,27 +15,40 @@ const balances = {
     size: (ranges[2][1] - ranges[2][0]),
   },
 }
-
-
 const transfer = (from, to, amount) => {
-  from = balances[from]
-  to = balances[to]
-  if (from.size > amount) { // Check if from has enough balance before persuing
-    const adjacent = areAdjacent(from.ownedRange, to.ownedRange)
-    
+  const fromBalance = balances[from]
+  const fromRanges = fromBalance.ownedRange
+  const toBalance = balances[to]
+  const toRanges = toBalance.ownedRange
+
+  if (fromBalance.size > amount) { // Check if from has enough balance before persuing
+    const adjacent = areAdjacent(fromRanges, toRanges)
+
     if (adjacent) {
       // TODO: if adjacent atomic swap after transfer.
     } else {
-      // TODO: if not adjacent decide what side of the owned coins needs to be tranfered.
-
+      if (fromRanges[0] === toRanges[1]) {
+        fromRanges[0] = fromRanges[0] + amount
+        toRanges[1] = toRanges[1] + amount
+      } else {
+        fromRanges[1] = fromRanges[1] - amount
+        toRanges[0] = toRanges[0] - amount
+      }
+      balances[from] = fromBalance
+      balances[to] = toBalance
+      
+      console.log("balances: ", balances)
+      console.log("ranges: ", ranges)
     }
   }
 }
 
 const areAdjacent = (itemOne, itemTwo) => {
-  if (itemOne[0] < itemTwo[1]) {
-    return itemTwo[0] === itemOne[1] ? false : true
-  } else {
-    return itemOne[0] === itemTwo[1] ? false : true
+  if (itemOne[0] === itemTwo[1] || itemOne[1] === itemTwo[0]) {
+    return false 
+  } else{
+    return true
   }
 }
+
+transfer("0x0", "0x1", 1)
