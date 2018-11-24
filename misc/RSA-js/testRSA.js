@@ -1,21 +1,39 @@
 'use strict'
 
-const fastPow = require('./expSquaring').fastPow
+const RSA = require('./rsa')
 const b = require("big-integer")
 
-let p = 32416190039
-let q = 32416187761
-let N = b(p*q)
+let acc = new RSA(3, '1050809302800481912679')
+//console.log(accumulator)
 
-console.log(N)
+//acc.addElement(5)
+console.log('-------')
 
-let t = fastPow(b(1162261467), b(1060105447830), N)
-console.log(t)
+let b0 = [2, 3, 5]
+let b1 = [104849, 1300931, 7]
+let b2 = [7, '32416187899', '32416188517', '32416188647', '32416189391']
 
+acc.addBlock(b0)
+let A = acc.getAccumulator()
 
-// Notes
+console.log(acc._isContained(5, acc._getCofactor(5, 0, 0).toString(), A))
+console.log(acc._isContained(7, acc._getCofactor(7, 0, 0).toString(), A))
 
-// Compare javascript number implementations and exponenatiation times
-// http://peterolson.github.io/BigInteger.js/benchmark/#Exponentiation
+let expProof = acc.getInclusionProof(2,0,0)
+//console.log(expProof)
+console.log(acc.verifyCofactor(expProof, 2))
 
-// inspecting biginteger.js pow() 
+acc.addBlock(b1)
+A = acc.getAccumulator()
+A = acc.getAccumulatorByRange(1)
+
+console.log(acc._isContained(7, acc._getCofactor(7, 0, 0).toString(), A))
+console.log(acc._isContained(5, acc._getCofactor(5, 0, 1).toString(), A))
+console.log(acc._isContained(1300931, acc._getCofactor(1300931, 0, 1).toString(), A))
+
+acc.addBlock(b2)
+
+A = acc.getAccumulatorByRange(2)
+
+console.log(acc._isContained(5, acc._getCofactor(5, 0, 2).toString(), A))
+console.log(acc._isContained('32416188647', acc._getCofactor('32416188647', 0, 2).toString(), A))

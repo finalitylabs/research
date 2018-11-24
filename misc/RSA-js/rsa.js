@@ -109,7 +109,7 @@ let x2 = bigInt(103)
   .multiply(101)
   .multiply(29)
   //.multiply(29)
-  
+
 x2 = x2.multiply(x)
 
 x = x.multiply(103)
@@ -179,14 +179,6 @@ console.log(verifyCofactor(proof, a, A2))
 // // let B = bigInt(utils.hexToNumberString(utils.sha3(h.toString()))).mod(N)
 
 
-// console.log(h.toString())
-// console.log(r.toString())
-// console.log(x.toString())
-// console.log(B.toString())
-// console.log(b.toString())
-// console.log(c1.toString())
-// console.log(c2.toString())
-
 let _p = getInclusionProof(bigInt(29), 0, A2)
 console.log(verifyCofactor(_p, a, A2))
 
@@ -235,7 +227,7 @@ function getInclusionProof(v, block, _A){
   // compute x given (g, A, v). Can't do this given mod N
   // grab transactions and generate x
 
-  let _x = generateCofactor(0, 1)
+  let _x = getCofactor(0, 1)
 
   let b = h.modPow(x.divide(B), N)
   let r = x.mod(B)
@@ -246,9 +238,13 @@ function getExclusionProof(element, blockRange) {
 
 }
 
-function generateCofactor(startBlock, endBlock) {
+function getCofactor(endBlock) {
   // todo, grab stored transactions to generate cofactor
   return x
+}
+
+function storeCofactor(x, endBlock) {
+
 }
 
 // js Math.log return the ln(x) we must convert
@@ -257,3 +253,90 @@ function logB(val, b) {
   console.log('log A = ' + Math.log(val) / Math.log(b))
   return Math.round(Math.log(val) / Math.log(b))
 }
+
+class RSAaccumulator {
+  constructor(g, N) {
+    this.g = bigInt(g)
+    this.N = bigInt(N)
+    this.A = this.g
+    this.blocks = []
+  }
+
+  addElement(v) {
+    v = bigInt(v)
+    console.log('adding element: '+v+' to accumulator: '+this.A.toString())
+    this.A = this.A.modPow(v.toString(), this.N.toString())    
+  }
+
+  addBlock(block) {
+    console.log('adding list of txs to accumulator')
+    let accumElems = bigInt(1)
+    for(var i=0; i<block.length; i++) {
+      console.log('adding element: '+block[i]+' to accumulator: '+this.A.toString())
+      accumElems = accumElems.multiply(block[i])
+    }
+    this.A = this.A.modPow(accumElems.toString(), this.N.toString())
+    block.unshift(this.A.toString())
+    this.blocks.push(block)
+  }
+
+  getAccumulator() {
+    return this.A
+  }
+
+  getAccumulatorByRange(e) {
+    return bigInt(this.blocks[e][0])
+  }
+
+  _isContained(element, cofactor, _A) {
+    element = bigInt(element)
+    let res = this.g.modPow(element.multiply(cofactor).toString(), this.N.toString())
+    return res.equals(_A.toString())
+  }
+
+  _getCofactor(v, start, end) {
+    let xv = bigInt(1)
+
+    for(var i=start; i<=end; i++) {
+      let l = this.blocks[i].length
+      for(var j=1; j<l; j++) {
+        xv = xv.multiply(this.blocks[i][j])
+      }
+    }
+    return xv.divide(v)
+  }
+
+  // as per Xuanji's suggestion, let's keep x local to the operator, 
+  // generate an inclusion proof for a single given element
+  // uses wesoloski proof of exponentiation so that recipients 
+  // of the proof don't need to witness the entire [g...A]
+  getInclusionProof(v, s, e){
+    let h = this.g.modPow(v, this.N)
+    let B = bigInt(utils.hexToNumberString(utils.soliditySha3(this.g.toString(),this.A.toString(), h.toString())))
+    // get cofactor somehow, perhaps check full tx records of request A range and... or
+    // compute x given (g, A, v). Can't do this given mod N
+    // grab transactions and generate x
+
+    let _x = this._getCofactor(v, s, e)
+
+    let b = h.modPow(_x.divide(B), this.N)
+    let r = _x.mod(B)
+    return {b:b,r:r,A:this.blocks[e][0]}
+  }
+
+  // verifies the cofactor proof for a given range
+  verifyCofactor(proof, v){
+    let h = this.g.modPow(v, this.N)
+    let B = bigInt(utils.hexToNumberString(utils.soliditySha3(this.g.toString(), proof.A, h.toString())))
+
+    let z = proof.b.modPow(B, N)
+    let c = h.modPow(proof.r, N)
+
+    let c1 = z.multiply(c).mod(N)
+    let c2 = bigInt(proof.A).mod(N)
+    return c1.equals(c2)
+  }
+
+}
+
+module.exports= RSAaccumulator
