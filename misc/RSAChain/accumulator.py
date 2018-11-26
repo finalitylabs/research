@@ -38,13 +38,19 @@ class AccumulatorChain:
 
     def get_exclusion_proofs(self, block, count, prime):
         blocks = self.blocks[block:block+count]
+        g = self.accums[block - 1]
+        A = self.accums[block + count - 1]
         for b in blocks:
             if prime in b:
-                raise Exception("Prime {} does exist in block {}!".format(prime,b))
-        m = mult([mult(b) for b in blocks])
-        r = prime - m % prime
-        cofactor = (m + r) // prime
-        return (r, cofactor)
+                raise Exception("Prime {} does exist in block {}!".format(prime,block))
+        Q = mult([mult(b) for b in blocks])
+        s = Q % prime
+        x = (Q - s) // prime
+        h = g ** prime
+        B = hasher(g * A)
+        b = pow(h, x // B, self.n)
+        r = x % B
+        return (b, r, s)
 
     def verify_inclusion_proof(g, A, n, prime, proof):
         b, r = proof
@@ -52,12 +58,13 @@ class AccumulatorChain:
         B = hasher(g * A)
         return (pow(b, B, n) * pow(h, r, n)) % n == A
 
-    def verify_exclusion_proof(prev_acc, acc, n, prime, r, cofactor):
-        if r >= prime or r < 0:
-            raise Exception("Invalid r!")
-        left = pow(prev_acc, prime * cofactor, n)
-        right = pow(prev_acc, r, n) * acc % n
-        return left == right
+    def verify_exclusion_proof(g, A, n, prime, proof):
+        b, r, s = proof
+        if s >= prime or s <= 0:
+            return False
+        h = g ** prime
+        B = hasher(g * A)
+        return (pow(b, B, n) * pow(h, r, n) * pow(g, s, n)) % n == A
 
 if __name__ == "__main__":
     G = 3
@@ -74,9 +81,9 @@ if __name__ == "__main__":
     proof = chain.get_inclusion_proof(3, 31)
     print(AccumulatorChain.verify_inclusion_proof(chain.accums[2],chain.accums[3],chain.n,31,proof))
 
-    r, cof = chain.get_exclusion_proofs(1, 2, 7) # Exclusion proof for block 1 & 2
-    print(AccumulatorChain.verify_exclusion_proof(chain.accums[0],chain.accums[2],chain.n,7,r,cof))
-    r, cof = chain.get_exclusion_proofs(2, 2, 7) # Exclusion proof for block 2 & 3
-    print(AccumulatorChain.verify_exclusion_proof(chain.accums[1],chain.accums[3],chain.n,7,r,cof))
-    r, cof = chain.get_exclusion_proofs(1, 3, 7) # Exclusion proof for block 1 & 2 & 3
-    print(AccumulatorChain.verify_exclusion_proof(chain.accums[0],chain.accums[3],chain.n,7,r,cof))
+    proof = chain.get_exclusion_proofs(1, 2, 7) # Exclusion proof for block 1 & 2
+    print(AccumulatorChain.verify_exclusion_proof(chain.accums[0],chain.accums[2],chain.n,7,proof))
+    proof = chain.get_exclusion_proofs(2, 2, 7) # Exclusion proof for block 2 & 3
+    print(AccumulatorChain.verify_exclusion_proof(chain.accums[1],chain.accums[3],chain.n,7,proof))
+    proof = chain.get_exclusion_proofs(1, 3, 7) # Exclusion proof for block 1 & 2 & 3
+    print(AccumulatorChain.verify_exclusion_proof(chain.accums[0],chain.accums[3],chain.n,7,proof))
