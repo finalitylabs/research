@@ -31,4 +31,10 @@ contract Primes {
     }
   }
 
+  function hash(bytes _data, uint32 _count) {
+    require(primes.length >= _count, "Not enough primes available!");
+    uint32 index = keccak256(_data) % _count;
+    return primes[index];
+  }
+
 }
