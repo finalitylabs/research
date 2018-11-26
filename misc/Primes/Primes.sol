@@ -25,15 +25,19 @@ contract Primes {
     require(_primes.length == _count * 4, "Should provide 4-bytes for each prime.");
 
     witness =  keccak256(abi.encodePacked(witness, _primes));
+    uint256 offset = 32;
+    uint32 prime;
 
     for(uint32 i = 0; i < _count; i++) {
-      primes[_start + i] = _primes.getUint32(i * 4);
+      assembly {prime := div(mload(add(_primes, offset)),exp(256, 28))}
+      primes[_start + i] = prime;
+      offset += 32;
     }
   }
 
-  function hash(bytes _data, uint32 _count) {
+  function hash(bytes _data, uint32 _count) public view returns (uint32) {
     require(primes.length >= _count, "Not enough primes available!");
-    uint32 index = keccak256(_data) % _count;
+    uint32 index = uint32(keccak256(_data)) % _count;
     return primes[index];
   }
 
