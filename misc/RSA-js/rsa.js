@@ -17,7 +17,7 @@ const utils = require('web3-utils')
 // b^B * h^r = z
 // z = h^B*floor(x/B)+x mod B = h^x
 //
-// exclusion proof ov v in [g....A]
+// exclusion proof of v in [g....A]
 // prove r is known for 0 < r < v where A * g^r is a know power of g^v
 // ie
 // prove 7 is not a part of [g...A]
