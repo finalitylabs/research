@@ -1,0 +1,97 @@
+\documentclass[12pt]{article}
+\title{Plasma RSA Cashflow}
+\author{Nathan Ginnever, Keyvan M. Kambakhsh}
+\date{\today}
+
+\begin{document}
+\maketitle
+\centerline{\textit{Introduction}}
+
+Plasma RSA Cashflow is an extension to the cashflow spec that maintains an O(N) merkle paths for inclusion proofs but, reduces the burden of exclusion proofs from O(N) to O(1) for all owned ranges N. This uses an RSA accumulator to achieve this, requiring a unique prime number for each range ID. There is a possibility of using lattice based accumulators [1] to add arbitrary data to the accumulator set, we have not explored this option yet and is left for further research. Arbitrary data in the accumulator is desired as to reduce the inclusion proofs from O(N) merkle paths to O(1) batched inclusion accumulator value. 
+
+As with previous Plasm specs, this paper will detail the `deposit`, `send`, and `exit` mechanisms of the NFT transaction system. This expands on the cashflow document by adding the necessary details for the RSA accumulation.
+\\
+\\
+\centerline{\textbf{Transaction Format}}
+
+Transactions will be associated with ranges and require the following format.
+\\
+\\
+$[[‘send’, [prime, sequence, start, offset, recipient], signature]$
+\\
+\\
+TODO expand on how these transactions fit in a tree perhaps.
+\\
+\\
+\centerline{\textbf{Ranges}}
+
+We define ranges the same way as the cashflow spec [2] using a merkle sum tree to reduce the inclusion proof size from $O(log(n))$ where $n = 2^{40}$ (a reasonable set of primes) to $n = |fragments|$ (using cashflow spec definition of fragments). As fragmentation increases the length of inclusion branches increases to 2^40 in the worst case. 
+
+TODO: Further definition on how ranges split and what happens to prime assignment when they do. Same for when two ranges become contiguous, can we combine primes?
+\\
+\\
+\centerline{\textbf{Hash-To-Prime (Ranges)}}
+
+We can use a similar approach to what Bankex [3] proposes. The primes accumulated to mark range identifiers do not need to be large for any security reasons. Given this we should choose primes for this function to be as small as possible. We should still be able to reserve the first $2^{40}$ primes for coin IDs.
+\\
+\\
+\centerline{\textbf{Merkle Inclusion Proofs}}
+
+We use a MST to store transactions that relate to ranges. For a set $n$ of fragmented ranges, an owner must keep $log(ranges) * n_i$ hashes. Using an MST should always result in less hashes stored than a sparse merkle tree with $2^{64}$ leaves or $log(2^{64}) =64$ hashes per fragmented range.
+\\
+\\
+\centerline{\textbf{Accumulator Exclusion Proofs}}
+
+The RSA accumulator will be used to mark exclusions rather than inclusions. In doing this, we can use the inclusion mechanics of RSA while still proving exclusion proof. This is necessary as there is no know way to batch exclusion proofs with RSA. Recall, for some tx $p_i$ that spends a token, to prove exclusion we must find a value $r$ s.t. $0 < r < p_i$ where $A * g^r$ is a known power of $g^{p_i}$.
+\\
+\\
+\centerline{\textbf{Accumulator Mechanics}}
+
+To achieve a list of exclusion, we note that multiple inclusions of the same prime number is possible. We will use this fact to construct a sequence number for each range. I.e. Given a group $G = Z / Z_p^*$ where accumulator $A = g^N mod(n)$ and $N=\prod{p_i^{e_i}}$. Given that the factorization of $n$ is unknown, it is believed to be infeasible to fake proofs by the prover.
+
+When a prime is accumulated more than once, we can use the number of times $e_i$ that $p_i$ is accumulated in $N$. I.e. If we want to know that the token range associated with $p_i = 5$ has never been spent since its deposit, we would ask for an inclusion proof of $e_i = 1$. Then $w = N/5^1$. If a spend of $p_i$ occurs and you want to know that $p_i$ is at sequence $s$, you only need to see if $p_i^{s+1}$ is in $N$. To know that $p_i = 5$ has been spent once, set $e_i = 2$ and $w = N/5^2$. 
+
+An inclusion proof $\pi$ is of the form $\pi = g^w$ for some witness $w$. The witness is the cofactor $N/p_i^{e_k}$. A verifier computes $g^{w^{p_i^{e_i}}} = A$.
+\\
+\\
+\textit{Wesoloski Proof of Exponentiation}
+
+The cofact witness $N/p_i^{e_k}$ can get very large as all transactions are accumulated in $N$. Using the Wesoloski scheme, the prover (operator) can supply a compact $w$ as the proof to the verifier. This ensures that the operator uses the correct generator. [todo: perhaps clarify this]
+\\
+\\
+\textit{Hash to Prime (Wesoloski)}
+
+We need large primes for the Wesoloski scheme as Alex [4] research suggests in his criteria for Hash to Prime. TODO expand on this. 
+\\ 
+\\
+\centerline{\textbf{Deposit}}
+
+This is done in the same way as cashflow with an onchain token deposit to the plasma parent contract. The only difference here will be the assignment of a unique prime number that will identify a new range of tokens. 
+\\
+\\
+\centerline{\textbf{Send}}
+
+The send format is described above and allows for an owner of a range of coins to be able to generate a transaction that assigns all or part of their range to a new owner. 
+\\
+\\
+\centerline{\textbf{Exit}}
+
+Since we have no merge protocol, we must exit all fragmented ranges separately. Atomic swaps may help to defragment ranges. [todo expand]
+\\
+\\
+\centerline{\textbf{Smart Contract}}
+
+[TODO]
+\\
+\\
+\centerline{\textbf{References}}
+
+1 \url{https://eprint.iacr.org/2014/1015.pdf}
+
+2 \url{https://hackmd.io/DgzmJIRjSzCYvl4lUjZXNQ#Transaction-Tree-Structure}
+
+3 \url{https://ethresear.ch/t/plasma-prime-design-proposal/4222}
+
+4 \url{https://hackmd.io/s/SyynHeGCQ}
+
+\end{document}
