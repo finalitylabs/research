@@ -25,7 +25,7 @@ Transasctions must be placed within their range $[start, offset]$. This placemen
 \\
 \centerline{\textbf{Ranges}}
 
-We define ranges of ownership the same way as the cashflow spec [2]. This uses a merkle sum tree to reduce the inclusion proof size from $O(log(n))$ where $n = 2^{40}$ (a reasonable set of primes) to $n = |fragments|$ (using cashflow spec definition of fragments). As fragmentation increases the number of inclusion hashes increases to $log(2^{40}) = 40$ in the worst case. 
+We define ranges of ownership the same way as the cashflow spec [2]. This uses a merkle sum tree to reduce the inclusion proof size from $O(log(n))$ where $n = 2^{40}$ (a reasonable set of primes) to $n = |fragments|$ (using cashflow spec definition of fragments). For a set $F$ of fragmented ranges and $n$ coins, an owner must keep $log(F) * n$ hashes. As fragmentation increases the number of inclusion hashes increases to $log(2^{40}) = 40$ in the worst case. 
 
 TODO: Further definition on how ranges split and what happens to prime assignment when they do. Same for when two ranges become contiguous, can we combine primes?... When a range is assigned, it will show an offset that counts the number of NFT tokens in that range. Tokens can never be split or merged, just reassigned to new range ownership.
 \\
@@ -35,11 +35,6 @@ TODO: Further definition on how ranges split and what happens to prime assignmen
 We can use a similar approach to what Bankex [3] proposes. The primes accumulated to mark range identifiers do not need to be large for any security reasons. Given this we should choose primes for this function to be as small as possible. We should still be able to reserve the first $2^{40}$ primes for coin IDs by selecting primes of size less than $10^{14}$.
 \\
 \\
-\centerline{\textbf{Merkle Inclusion Proofs}}
-
-We use a MST to store transactions that relate to ranges. For a set $F$ of fragmented ranges and $n$ coins, an owner must keep $log(F) * n$ hashes. Using an MST should always result in less hashes stored than a sparse merkle tree with $2^{40}$ leaves or $log(2^{40}) =40$ hashes per token.
-\\
-\\
 \centerline{\textbf{Accumulator Exclusion Proofs}}
 
 The RSA accumulator will be used to mark exclusions rather than inclusions. In doing this, we can use the inclusion mechanics of RSA while still proving exclusion proof. This is necessary as there is no know way to batch exclusion proofs with RSA. Recall, for some tx $p_i$ that spends a token, to prove exclusion we must find a value $r$ s.t. $0 < r < p_i$ where $A * g^r$ is a known power of $g^{p_i}$.
@@ -47,11 +42,11 @@ The RSA accumulator will be used to mark exclusions rather than inclusions. In d
 \\
 \centerline{\textit{Accumulator Mechanics}}
 
-To achieve a list of exclusion, we note that multiple inclusions of the same prime number is possible. We will use this fact to construct a sequence number for each range. I.e. Given a group $G = Z / Z_p^*$ where accumulator $A = g^N mod(n)$ and $N=\prod{p_i^{e_i}}$. Given that the factorization of $n$ is unknown, it is believed to be infeasible to fake proofs by the prover.
+Given a group $G = Z / Z_p^*$ where accumulator $A = g^N mod(n)$ and $N=\prod{p_i^{e_i}}$. Given that the factorization of $n$ is unknown, it is believed to be infeasible to fake proofs by the prover.
 
-When a prime is accumulated more than once, we can use the number of times $e_i$ that $p_i$ is accumulated in $N$. I.e. If we want to know that the token range associated with $p_i = 5$ has never been spent since its deposit, we would ask for an inclusion proof of $e_i = 1$. Then $w = N/5^1$. If a spend of $p_i$ occurs and you want to know that $p_i$ is at sequence $s$, you only need to see if $p_i^{s+1}$ is in $N$. To know that $p_i = 5$ has been spent once, set $e_i = 2$ and $w = N/5^2$. 
+To achieve a list of exclusion, we note that multiple inclusions of the same prime number is possible. We will use this fact to construct a sequence number for each range. When a prime is accumulated more than once, we can use the number of times $e_i$ that $p_i$ is accumulated in $N$. If we want to know that the token range associated with $p_i$ has never been spent since its deposit, we would ask for an inclusion proof of $p_i^{e_i}$. Then the prover will compute $w = N/p_i^{e_i}$. If a spend of $p_i$ occurs and you want to know that $p_i$ is at sequence $s$, you only need to see if $p_i^{s+1}$ is in $N$. 
 
-An inclusion proof $\pi$ is of the form $\pi = g^w$ for some witness $w$. The witness is the cofactor $N/p_i^{e_k}$. A verifier computes $g^{w^{p_i^{e_i}}} = A$.
+An inclusion proof $\pi$ is of the form $\pi = g^w$ for some witness $w$. The witness is the cofactor $N/p_i^{e_k}$. A verifier computes $g^{w^{p_i^{e_i}}} = A$. i.e To know that $p = 5$ has been spent once, set $e = 2$ and $w = N/5^2$. The verifier would compute $\pi^{5^2}= g^N$.
 \\
 \\
 \centerline{\textit{Wesoloski Proof of Exponentiation}}
