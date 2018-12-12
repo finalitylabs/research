@@ -7,9 +7,9 @@
 \maketitle
 \centerline{\textit{Introduction}}
 
-Plasma Primeflow is an extension to the Cashflow specification that maintains an O(N) merkle paths for inclusion proofs but, reduces the burden of exclusion proofs from O(N) to O(1) for all owned ranges N. An RSA accumulator is utilized to achieve this, requiring a unique prime number for each range ID. It should be noted that this implementation requires a trusted setup ceremony to ensure that the order of the RSA field is unknown. There is a possibility of using lattice based accumulators [1] to add arbitrary data to the accumulator set [todo explore this further]. Arbitrary data in the accumulator is desired as to reduce the inclusion proofs from O(N) merkle paths to O(1) batched inclusion accumulator value. 
+This work presents an application of cryptographic universal accumulators [5] to Plasma cash history size reduction. Plasma Primeflow is an extension to the Cashflow specification [2] that maintains an O(N) merkle paths for inclusion proofs where $N$ is a total number of \textit{ranges} but, reduces the burden of exclusion proofs from O(N) per block commit to O(1) for all owned ranges over any interval of blocks. An RSA accumulator is utilized to achieve this, requiring a unique prime number for each range ID. It should be noted that this implementation requires a trusted setup ceremony to ensure that the order of the RSA field is unknown. There is a possibility of using lattice based accumulators [1] to add arbitrary data to the accumulator set [todo explore this further]. Arbitrary data in the accumulator is desired as to reduce the inclusion proofs from O(N) merkle paths to O(1) batched inclusion accumulator value. 
 
-As with previous Plasm designs, this paper will detail the `deposit`, `send`, and `exit` mechanisms of the NFT transaction system. This expands on the cashflow document by adding the necessary details for the RSA accumulation.
+As with previous Plasma designs, this paper will detail the \textit{deposit}, \textit{send}, and \textit{exit} mechanisms of the NFT transaction system. This expands on the cashflow document by adding the necessary details for the RSA accumulation.
 \\
 \\
 \centerline{\textbf{Transaction Format}}
@@ -20,14 +20,14 @@ Transactions will be associated with ranges and require the following format.
 $[[‘send’, [prime, sequence, start, offset, recipient], signature]$
 \\
 \\
-TODO expand on how these transactions fit in a tree perhaps.
+Transasctions must be placed within their range $[start, offset]$. This placement belongs to a merkle sum tree which allows for the implementation to maintain transactions that involve multiple token IDs within the same range to be placed at the same leaf in the tree.
 \\
 \\
 \centerline{\textbf{Ranges}}
 
-We define ranges the same way as the cashflow spec [2] using a merkle sum tree to reduce the inclusion proof size from $O(log(n))$ where $n = 2^{40}$ (a reasonable set of primes) to $n = |fragments|$ (using cashflow spec definition of fragments). As fragmentation increases the number of inclusion hashes increases to $log(2^{40}) = 40$ in the worst case. 
+We define ranges of ownership the same way as the cashflow spec [2]. This uses a merkle sum tree to reduce the inclusion proof size from $O(log(n))$ where $n = 2^{40}$ (a reasonable set of primes) to $n = |fragments|$ (using cashflow spec definition of fragments). As fragmentation increases the number of inclusion hashes increases to $log(2^{40}) = 40$ in the worst case. 
 
-TODO: Further definition on how ranges split and what happens to prime assignment when they do. Same for when two ranges become contiguous, can we combine primes?
+TODO: Further definition on how ranges split and what happens to prime assignment when they do. Same for when two ranges become contiguous, can we combine primes?... When a range is assigned, it will show an offset that counts the number of NFT tokens in that range. Tokens can never be split or merged, just reassigned to new range ownership.
 \\
 \\
 \centerline{\textbf{Hash-To-Prime (Ranges)}}
@@ -93,5 +93,7 @@ Since we have no merge protocol, we must exit all fragmented ranges separately. 
 3 \url{https://ethresear.ch/t/plasma-prime-design-proposal/4222}
 
 4 \url{https://hackmd.io/s/SyynHeGCQ}
+
+5 \url{https://www.cs.purdue.edu/homes/ninghui/papers/accumulator_acns07.pdf}
 
 \end{document}
