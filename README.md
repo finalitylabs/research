@@ -1,4 +1,14 @@
 # research
 Finality Research
 
-Plasma Prime 
+Plasma: 
+ - vector
+ - cash
+ - cashflow
+ - debit
+ - prime
+ - primeflow
+ 
+ZKS[N]ARKS:
+ 
+ 
