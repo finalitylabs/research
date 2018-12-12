@@ -1,0 +1,14 @@
+\documentclass[11pt]{article}
+\title{Plasma Vector}
+\author{Nathan Ginnever}
+\date{\today}
+
+\begin{document}
+\maketitle
+\centerline{\textit{Introduction}}
+
+This work presents an application of cryptographic universal accumulators [5] that was expanded upon in the blockchain setting by Bunnz et al [1]. We apply these accumulators in Plasma [2] and show that with minimal "roll back" in the case of data unavaibility, Plasma Vector can scale to high transaction throughput with low overhead for clients at the expensive of increased prover complexity from the operator.
+
+As with previous Plasma designs, this paper will detail the \textit{deposit}, \textit{send}, and \textit{exit} mechanisms of the UTXO set based transaction system. This expands on the Plasma MVP construction, reducing the verification overhead and removing the mass exit problem.
+
+\end{document}

@@ -1,5 +1,5 @@
 # research
-Finality Research
+Finality Labs Research
 
 Plasma: 
  - vector
