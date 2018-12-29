@@ -1,0 +1,130 @@
+pragma solidity 0.4.24;
+
+import "./BigNumber.sol";
+
+contract HashToPrime {
+
+  uint[] public test;
+  bytes[] public test3;
+  uint public test2;
+
+  constructor() public {
+  }
+
+  function hash(bytes memory input) public returns (bytes){
+    uint8 j = 0;
+    bytes memory h_input;
+    bytes32 h_output;
+    bytes memory prefix = hex"0a";
+    //BigNumber.instance memory prime;
+    uint16 prime;
+    BigNumber.instance[3] memory randomness;
+
+    while(true){
+      //h_input = abi.encodePacked(prefix, j, input);
+      h_input = abi.encodePacked(j, input);
+      h_output = keccak256(h_input);
+
+      bytes memory out = new bytes(2);
+      for(var i=0; i<2; i++) {
+        out[i] = h_output[i];
+      }
+
+      //test.push(uint16(h_output));
+      prime = uint16(h_output);
+
+      // for(var k=0; k<3; k++){
+      //   h_output = keccak256(k);
+      //   for(var z=0; z<8; z++) {
+      //     out[z] = h_output[z];
+      //   }
+      //   randomness[k] = BigNumber.instance(out, false, out.length);
+      // }
+
+      if (isProbablePrime(prime)) {
+        return;
+      }
+
+      if(j==18) return;
+      j+=1;
+    }
+  }
+
+  function isProbablePrime(uint32 _n) internal returns (bool) {
+    //return BigNumber.is_prime(_prime, _rand);
+    // uint s = 3; // accuracy param
+    if(_n % 2 == 0) return false; // must be odd
+
+    BigNumber.instance memory a;
+    BigNumber.instance memory m;
+    BigNumber.instance memory n;
+
+    bytes memory b = new bytes(32);
+
+    assembly { mstore(add(b, 32), _n) }
+    n.val = b;
+    n.neg = false;
+    n.bitlen = 256;
+    b = new bytes(32);
+
+    uint k=1;
+    BigNumber.instance memory b0;
+    uint divisor;
+    uint b1;
+    uint phi =_n-1;
+    uint _m;
+    uint previous;
+
+    while(true){
+      divisor = 2**k;
+      if(phi%divisor != 0){
+        _m=phi/previous;
+        assembly { mstore(add(b, 32), _m) }
+        m.val = b;
+        m.neg = false;
+        m.bitlen = 256;
+        //test.push(m.val);
+        b = new bytes(32);
+
+        // set random, TODO run this more than once 
+        // for better probability of prime number.
+        assembly { mstore(add(b, 32), 421) }
+        a.val = b;
+        a.neg = false;
+        a.bitlen = 256;
+        b = new bytes(32);
+
+        //test.push(a.val);
+        //b0 = a**m%n;
+        b0 = BigNumber.prepare_modexp(a, m, n);
+
+        if(bytesToUint(b0.val) == 1 || bytesToUint(b0.val) == phi) {
+          return true; // probably prime
+        }
+
+        b1 = (bytesToUint(b0.val)**2)%_n;
+        if(b1 == 1) {
+          return true; // probably prime
+        }
+
+        return false;
+      }
+
+      test.push(_n);
+      //test3.push('0x1337');
+      previous = divisor;
+      k+=1;
+      if(k==11) return false;
+    }
+
+    return false;
+  }
+
+    function bytesToUint(bytes b) public returns (uint256){
+      uint256 number;
+      for(uint i=0;i<b.length;i++){
+        number = number + uint(b[i])*(2**(8*(b.length-(i+1))));
+      }
+      return number;
+    }
+}

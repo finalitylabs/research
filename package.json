@@ -17,11 +17,14 @@
   },
   "homepage": "https://github.com/finalitylabs/research#readme",
   "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
     "big-integer": "^1.6.36",
     "biginteger.js": "^1.0.1",
     "bignumber.js": "^8.0.1",
     "int64-buffer": "^0.99.1007",
     "pad-left": "^2.1.0",
+    "truffle-hdwallet-provider-privkey": "^0.3.0",
     "web3-utils": "^1.0.0-beta.36"
   }
 }
