@@ -19,7 +19,7 @@ contract('', function(accounts) {
   })
 
   it('calls hash to prime', async () => {
-    let res = await htp.hash('0xafee12341CF66')
+    let res = await htp.hash('0xb7afe31CF6b3')
     let gasUsed = res.receipt.gasUsed
     console.log(gasUsed)
 

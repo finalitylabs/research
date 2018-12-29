@@ -17,36 +17,21 @@ contract HashToPrime {
     bytes32 h_output;
     bytes memory prefix = hex"0a";
     //BigNumber.instance memory prime;
-    uint32 prime;
+    uint64 prime;
     BigNumber.instance[3] memory randomness;
 
     while(true){
-      //h_input = abi.encodePacked(prefix, j, input);
-      h_input = abi.encodePacked(j, input);
+      h_input = abi.encodePacked(prefix, j, input);
       h_output = keccak256(h_input);
 
-      // bytes memory out = new bytes(2);
-      // for(var i=0; i<2; i++) {
-      //   out[i] = h_output[i];
-      // }
-
-      //test.push(uint16(h_output));
-      prime = uint32(h_output);
-
-      // for(var k=0; k<3; k++){
-      //   h_output = keccak256(k);
-      //   for(var z=0; z<8; z++) {
-      //     out[z] = h_output[z];
-      //   }
-      //   randomness[k] = BigNumber.instance(out, false, out.length);
-      // }
+      prime = uint64(h_output);
 
       if (isProbablePrime(prime)) {
         test2 = prime;
         return;
       }
 
-      if(j==100) return;
+      if(j==200) return;
       j++;
     }
   }
@@ -86,8 +71,6 @@ contract HashToPrime {
         m.bitlen = 256;
         b = new bytes(32);
 
-        // set random, TODO run this more than once 
-        // for better probability of prime number.
         assembly { mstore(add(b, 32), 421) }
         a.val = b;
         a.neg = false;
@@ -111,25 +94,22 @@ contract HashToPrime {
             return false; // composite number
           }
         }
-
         return false;
       }
-
       //test.push(_n);
       //test3.push('0x1337');
       previous = divisor;
       k+=1;
       if(k==8) return false;
     }
-
     return false;
   }
 
-    function bytesToUint(bytes b) public returns (uint256){
-      uint256 number;
-      for(uint i=0;i<b.length;i++){
-        number = number + uint(b[i])*(2**(8*(b.length-(i+1))));
-      }
-      return number;
+  function bytesToUint(bytes b) public returns (uint256){
+    uint256 number;
+    for(uint i=0;i<b.length;i++){
+      number = number + uint(b[i])*(2**(8*(b.length-(i+1))));
     }
+    return number;
+  }
 }
