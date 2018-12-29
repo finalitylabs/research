@@ -19,20 +19,20 @@ contract('', function(accounts) {
   })
 
   it('calls hash to prime', async () => {
-    let res = await htp.hash('0x341CF66')
+    let res = await htp.hash('0xafee12341CF66')
     let gasUsed = res.receipt.gasUsed
     console.log(gasUsed)
 
     let test2 = await htp.test2()
     console.log(test2.toString())
 
-    for(var i=0; i<50; i++) {
-      let test = await htp.test(i)
-      console.log(test.toString())
+    // for(var i=0; i<100; i++) {
+    //   let test = await htp.test(i)
+    //   console.log(test.toString())
 
-      // let test2 = await htp.test3(i)
-      // console.log(test2.toString())
-    }
+    //   // let test2 = await htp.test3(i)
+    //   // console.log(test2.toString())
+    // }
   })
 
   it('', async () => {
