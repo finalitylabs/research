@@ -502,7 +502,7 @@ library BigNumber {
       * parameter: bytes exponent
       * returns: bytes ret.
       */
-    function modexp(bytes memory _base, bytes memory _exp, bytes memory _mod) private view returns(bytes memory ret) {
+    function modexp(bytes memory _base, bytes memory _exp, bytes memory _mod) internal view returns(bytes memory ret) {
         assembly {
             
             let bl := mload(_base)

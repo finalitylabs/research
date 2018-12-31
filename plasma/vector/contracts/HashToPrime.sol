@@ -38,23 +38,21 @@ contract HashToPrime {
 
   function isProbablePrime(uint128 _n) internal returns (bool) {
     //return BigNumber.is_prime(_prime, _rand);
-    uint s = 3; // accuracy param
+    uint s = 1; // accuracy param
     if(_n % 2 == 0) return false; // must be odd
 
-    BigNumber.instance memory a;
-    BigNumber.instance memory m;
-    BigNumber.instance memory n;
+    bytes memory a;
+    bytes memory m;
+    bytes memory n;
 
     bytes memory b = new bytes(32);
 
     assembly { mstore(add(b, 32), _n) }
-    n.val = b;
-    n.neg = false;
-    n.bitlen = 256;
+    n = b;
     b = new bytes(32);
 
     uint k=1;
-    BigNumber.instance memory b0;
+    bytes memory b0;
     uint divisor;
     uint b1;
     uint phi =_n-1;
@@ -65,27 +63,24 @@ contract HashToPrime {
       divisor = 2**k;
       if(phi%divisor != 0){
         _m=phi/previous;
+        
         assembly { mstore(add(b, 32), _m) }
-        m.val = b;
-        m.neg = false;
-        m.bitlen = 256;
+        m = b;
         b = new bytes(32);
 
         assembly { mstore(add(b, 32), 421) }
-        a.val = b;
-        a.neg = false;
-        a.bitlen = 256;
+        a = b;
         b = new bytes(32);
 
         //b0 = a**m%n;
-        b0 = BigNumber.prepare_modexp(a, m, n);
+        b0 = BigNumber.modexp(a, m, n);
 
-        if(bytesToUint(b0.val) == 1 || bytesToUint(b0.val) == phi) {
+        if(bytesToUint(b0) == 1 || bytesToUint(b0) == phi) {
           return true; // probably prime
         }
 
         for(uint z=0; z<s; z++) {
-          b1 = (bytesToUint(b0.val)**2)%_n;
+          b1 = (bytesToUint(b0)**2)%_n;
           if(b1 == phi) {
             return true; // probably prime
           }
