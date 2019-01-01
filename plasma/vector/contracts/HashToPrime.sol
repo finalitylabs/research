@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "./BigNumber.sol";
+import {BigNumber} from "./math/BigNumber.sol";
 
 contract HashToPrime {
 
@@ -63,7 +63,7 @@ contract HashToPrime {
       divisor = 2**k;
       if(phi%divisor != 0){
         _m=phi/previous;
-        
+
         assembly { mstore(add(b, 32), _m) }
         m = b;
         b = new bytes(32);
