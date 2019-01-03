@@ -22,7 +22,7 @@ endif #intel
 
 HEADERS= $(shell ls *h)
 
-all: benchmark test libfor.a
+all: benchmark test libfor.a prime
 	echo "please run unit tests by running ./test"
 
 for.o: for.h for.c for-gen.c
@@ -31,11 +31,20 @@ for.o: for.h for.c for-gen.c
 for: $(HEADERS) for.o
 	ar rvs libfor.a for.o
 
+sha256.o: sha256.h sha256.c
+	$(CC) $(CFLAGS) -c sha256.c
+
+sha256: $(HEADERS) sha256.o
+	ar rvs sha256.o
+
 gen: gen.pl
 	perl gen.pl > for-gen.c
 
 test: for $(HEADERS) test.c $(OBJECTS)
 	$(CC) $(CFLAGS) -o test test.c $(OBJECTS) libfor.a
+
+prime: for $(HEADERS) prime.c $(OBJECTS)
+	$(CC) $(CFLAGS) -o prime prime.c $(OBJECTS) libfor.a
 
 benchmark: for $(HEADERS) benchmark.c
 	$(CC) $(CFLAGS) -o benchmark benchmark.c libfor.a

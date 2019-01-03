@@ -31,7 +31,7 @@ contract Parent is Ownable {
   function deposit() public payable {
     uint64 amt = uint64(msg.value/ASSET_DECIMALS_TRUNCATION);
     _amt = amt;
-    uint memory _offset = 
+    //uint memory _offset = 
     bytes32 hash = keccak256(abi.encodePacked(msg.sender, amt));
     _depositHashes[msg.sender].push(hash);
     emit Deposit(msg.sender, amt);
