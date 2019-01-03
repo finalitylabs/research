@@ -140,6 +140,24 @@ uint32_t hash_to_prime(uint32_t _index)
   }
 }
 
+ void BubbleSort(uint32_t a[], int array_size)
+ {
+ int i, j;
+ uint32_t temp;
+   for (i = 0; i < (array_size - 1); ++i)
+   {
+      for (j = 0; j < array_size - 1 - i; ++j )
+      {
+         if (a[j] > a[j+1])
+         {
+            temp = a[j+1];
+            a[j+1] = a[j];
+            a[j] = temp;
+         }
+      }
+   }
+ }  
+
 static void
 highlevel_unsorted()
 {
@@ -148,8 +166,12 @@ highlevel_unsorted()
 
     for (int i=0; i<LEN; i++)
         in[i] = hash_to_prime(i);
+    
+    printf("%u, %u\n", in[1], in[2]);
+    BubbleSort(in, 1000);
+    printf("%u, %u\n", in[1], in[2]);
 
-    uint32_t size = for_compressed_size_unsorted(&in[0], LEN);
+    uint32_t size = for_compressed_size_sorted(&in[0], LEN);
 
     printf("compressed %u primes (%u bytes) into %u bytes\n", LEN, LEN * 4, size);
     //printf("largest number generated: %u \n", in[LEN-1]);
