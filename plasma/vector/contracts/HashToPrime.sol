@@ -2,16 +2,13 @@ pragma solidity 0.4.24;
 
 import {BigNumber} from "./math/BigNumber.sol";
 
-contract HashToPrime {
+library HashToPrime {
 
-  uint[] public test;
-  bytes[] public test3;
-  uint public test2;
-
-  constructor() public {
+  function genNonPrimeWitness() public returns(uint64) {
+    
   }
 
-  function hash(bytes memory input) public returns (bytes){
+  function hash(bytes memory input) public returns (uint64){
     uint j = 0;
     bytes memory h_input;
     bytes32 h_output;
@@ -27,8 +24,7 @@ contract HashToPrime {
       prime = uint64(h_output);
 
       if (isProbablePrime(prime)) {
-        test2 = prime;
-        return;
+        return prime;
       }
 
       if(j==200) return;

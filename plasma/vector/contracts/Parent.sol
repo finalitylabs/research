@@ -12,36 +12,73 @@ contract Parent is Ownable {
 
   uint256 constant public ASSET_DECIMALS_TRUNCATION = 10e13;
   // lowest denom (0.0001 ether), 1 ether = 10,000 coins
-  // m = {0,1}^256 needs 2,560,000 primes per ether
-  // for 64 bit primes this is 20.48 mb of storage.
 
   mapping(address => bytes32[]) private _depositHashes;
   mapping(address => uint[]) private offsets;
+  mapping(uint => Decoder.Exit) public exits;
   uint currOffset;
+  uint numExit;
 
   event Deposit(address indexed depositer, uint64 indexed amount, uint offset);
 
   constructor() public {
     currOffset = 0;
+    numExit = 0;
   }
 
-  function submitBlock() onlyOwner {
+  function submitBlock(bytes memory encoded) onlyOwner {
 
   }
 
   function deposit() public payable {
     uint64 amt = uint64(msg.value/ASSET_DECIMALS_TRUNCATION);
     _amt = amt;
-    uint _offset = currOffset.add(_amt);
-    offsets[msg.sender].push(_offset);
     currOffset = currOffset.add(_amt);
-    bytes32 hash = keccak256(abi.encodePacked(msg.sender, amt, _offset));
+    offsets[msg.sender].push(currOffset);
+    bytes32 hash = keccak256(abi.encodePacked(msg.sender, amt, currOffset));
     _depositHashes[msg.sender].push(hash);
-    emit Deposit(msg.sender, amt, _offset);
+    emit Deposit(msg.sender, amt, currOffset);
   }
 
-  function startWithdrawal(bytes memory encoded) public payable {
+  function startExit(bytes memory encoded) public payable {
     Decoder.Exit memory _exit = encoded.decodeExit();
+    require(_isContained(_exit.proof));
+    numExit.add(1);
+    _exit.timeStart = now;
+    exits[numExit] = _exit;
+    numExit = numExit.add(1);
+  }
+
+  function finalizeExit() {
+
+  }
+
+  // Challenges
+
+  function challengeSpent() {
+
+  }
+
+  function challengeInvalidBlockProof() {
+
+  }
+
+  function challengeInvalidPrimes() {
+    // Provide witness that an exit is comprised of non-prime number
+  }
+
+  function challengeInvalidRange() {
+
+  }
+
+  // Utils
+
+  function _setChallenged() {
+    
+  }
+
+  function _isContained(bytes _proof) internal returns(bool) {
+    // todo
   }
 
 }
