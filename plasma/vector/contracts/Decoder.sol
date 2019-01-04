@@ -16,6 +16,7 @@ library Decoder {
     uint256 timeStart;
     uint32[] offsets;
     bytes proof;
+    uint8 challenge; // 1 means this exit is flagged for challenge
   }
 
   function decodeBlock(bytes memory rlpBytes) internal returns(Block) {
@@ -38,7 +39,8 @@ library Decoder {
       numRanges: uint32(items[0].toUint()),
       timeStart: uint256(items[1].toUint()),
       offsets: _decodeOffsets(items[2].toList()),
-      proof: items[3].toBytes()
+      proof: '0x',
+      challenge: 0
     });
   }
 

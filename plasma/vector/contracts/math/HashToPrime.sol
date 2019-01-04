@@ -1,11 +1,11 @@
 pragma solidity 0.4.24;
 
-import {BigNumber} from "./math/BigNumber.sol";
+import {BigNumber} from "./BigNumber.sol";
 
 library HashToPrime {
 
-  function genNonPrimeWitness() public returns(uint64) {
-    
+  function genNonPrimeWitness(uint128 _n) public returns(uint64) {
+    // todo
   }
 
   function hash(bytes memory input) public returns (uint64){
