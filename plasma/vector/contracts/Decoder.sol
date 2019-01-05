@@ -1,21 +1,30 @@
 pragma solidity ^0.4.23;
 
 import { RLPReader } from "./RLPReader.sol";
+import {HashToPrime} from "./math/HashToPrime.sol";
 
 library Decoder {
   using RLPReader for RLPReader.RLPItem;
   using RLPReader for bytes;
 
+  struct Proof {
+    bytes T; // g^w, for block proof, g = g^w^x = A_t-1 where x is all new primes in A_t
+    bytes r; // r = w mod B
+    bytes k; // k = floor(w/B)
+    bytes B; // htp(g, T)
+  }
+
   struct Block {
     bytes accumulator;
-    bytes wesProof;
+    Proof blockProof;
   }
 
   struct Exit {
+    address owner;
     uint32 numRanges;
     uint256 timeStart;
     uint32[] offsets;
-    bytes proof;
+    Proof coinsProof;
     uint8 challenge; // 1 means this exit is flagged for challenge
   }
 
@@ -26,7 +35,7 @@ library Decoder {
   function _decodeBlock(RLPReader.RLPItem[] items) private returns(Block) {
     return Block({
       accumulator: items[0].toBytes(),
-      wesProof: items[1].toBytes()
+      blockProof: _decodeProof(items[1].toList())
     });
   }
 
@@ -36,10 +45,11 @@ library Decoder {
 
   function _decodeExit(RLPReader.RLPItem[] items) private returns(Exit) {
     return Exit({
+      owner: msg.sender,
       numRanges: uint32(items[0].toUint()),
       timeStart: uint256(items[1].toUint()),
       offsets: _decodeOffsets(items[2].toList()),
-      proof: '0x',
+      coinsProof: Proof('0x','0x','0x','0x'),
       challenge: 0
     });
   }
@@ -50,6 +60,19 @@ library Decoder {
       arr[i] = uint32(items[i].toUint());
     }
     return arr;
+  }
+
+  function decodeProof(bytes memory rlpBytes) internal returns(Proof) {
+    return _decodeProof(rlpBytes.toRlpItem().toList());
+  }
+
+  function _decodeProof(RLPReader.RLPItem[] items) private returns(Proof) {
+    return Proof({
+      T: items[0].toBytes(),
+      r: items[1].toBytes(),
+      k: items[2].toBytes(),
+      B: items[3].toBytes()
+    });
   }
 
 }
