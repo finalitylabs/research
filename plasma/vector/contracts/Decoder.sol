@@ -7,8 +7,8 @@ library Decoder {
   using RLPReader for RLPReader.RLPItem;
   using RLPReader for bytes;
 
-  struct Proof {
-    bytes T; // g^w, for block proof, g = g^w^x = A_t-1 where x is all new primes in A_t
+  struct ExpProof {
+    bytes T; // coin proof g^w, block proof g^w = A_t/x = A_t-1 where x is all new primes in A_t
     bytes r; // r = w mod B
     bytes k; // k = floor(w/B)
     bytes B; // htp(g, T)
@@ -16,7 +16,7 @@ library Decoder {
 
   struct Block {
     bytes accumulator;
-    Proof blockProof;
+    ExpProof blockProof;
   }
 
   struct Exit {
@@ -24,8 +24,13 @@ library Decoder {
     uint32 numRanges;
     uint256 timeStart;
     uint32[] offsets;
-    Proof coinsProof;
+    ExpProof coinsProof;
     uint8 challenge; // 1 means this exit is flagged for challenge
+  }
+
+  struct TX {
+    // todo, less important, any format should work
+    // inluding experiements with hashed scripts and challenges
   }
 
   function decodeBlock(bytes memory rlpBytes) internal returns(Block) {
@@ -49,7 +54,7 @@ library Decoder {
       numRanges: uint32(items[0].toUint()),
       timeStart: uint256(items[1].toUint()),
       offsets: _decodeOffsets(items[2].toList()),
-      coinsProof: Proof('0x','0x','0x','0x'),
+      coinsProof: ExpProof('0x','0x','0x','0x'),
       challenge: 0
     });
   }
@@ -62,12 +67,12 @@ library Decoder {
     return arr;
   }
 
-  function decodeProof(bytes memory rlpBytes) internal returns(Proof) {
+  function decodeProof(bytes memory rlpBytes) internal returns(ExpProof) {
     return _decodeProof(rlpBytes.toRlpItem().toList());
   }
 
-  function _decodeProof(RLPReader.RLPItem[] items) private returns(Proof) {
-    return Proof({
+  function _decodeProof(RLPReader.RLPItem[] items) private returns(ExpProof) {
+    return ExpProof({
       T: items[0].toBytes(),
       r: items[1].toBytes(),
       k: items[2].toBytes(),

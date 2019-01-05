@@ -87,8 +87,6 @@ library HashToPrime {
         }
         return false;
       }
-      //test.push(_n);
-      //test3.push('0x1337');
       previous = divisor;
       k+=1;
       if(k==8) return false;

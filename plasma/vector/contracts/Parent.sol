@@ -43,7 +43,7 @@ contract Parent is Ownable {
     Decoder.Block memory _block = encoded.decodeBlock();
     blockNum = blockNum.add(1);
     blocks[blockNum] = _block;
-    // todo verify proofs
+    // todo verify proofs?
   }
 
   function deposit() public payable {
@@ -56,16 +56,17 @@ contract Parent is Ownable {
     emit Deposit(msg.sender, amt, currOffset);
   }
 
-  function cancelDeposit() public {
+  function cancelDeposit(bytes memory encoded) public {
     // todo, allow cancel before coins are accumulated and committed to a block
   }
 
   function startExit(bytes memory encoded) public payable {
     Decoder.Exit memory _exit = encoded.decodeExit();
     //require(_isContained(_exit.proof));
+    // todo add bond check
     numExit.add(1);
     _exit.timeStart = now;
-    exits[numExit] = _exit; // todo, dont store proof bytes, run inclusion check
+    exits[numExit] = _exit; // dont store proof bytes or run inclusion check
     numExit = numExit.add(1);
   }
 
@@ -79,19 +80,21 @@ contract Parent is Ownable {
   function finalizeExit(uint exitIndex) {
     require(now > exits[exitIndex].timeStart + EXIT_TIMEOUT);
     require(exits[exitIndex].challenge == 0);
+    // todo delete exit anyway if challenge is set
     // delete offsets and refund gas
     numExit = numExit.sub(1);
   }
 
   // Challenges
 
-  function challengeSpent(uint exitIndex, uint64[256] index) {
-    // invalidate exit by showing one coin in exit range does not open 
-    // to hashed transaction containing the exit initiators address
+  function challengeSpent(bytes txData, uint64[256] index) {
+    // invalidate block accumulator by showing that a given index
+    // was altered without the proper signature witness
   }
 
   function requestExitProof(uint exitIndex) payable {
     // ask an exit to reveal the inclusion proof, stalling the exit until revealed
+    // todo add bond check
     exits[exitIndex].challenge = 1;
   }
 
@@ -123,7 +126,7 @@ contract Parent is Ownable {
     // check that A_t^x = A, where x is provided as a wes18 proof
     // b^B * g^r = A
     Decoder.Block memory _block = blocks[prevBlock];
-    Decoder.Proof memory _proof = _block.blockProof;
+    Decoder.ExpProof memory _proof = _block.blockProof;
     bytes memory A_t = _block.accumulator;
     // todo _verifyBlock
   }
@@ -142,7 +145,7 @@ contract Parent is Ownable {
   }
 
   function challengeInvalidRange() {
-
+    // show that the indicies presented in exit are not valid
   }
 
   // Utils
@@ -161,8 +164,18 @@ contract Parent is Ownable {
     //return _accumulator == _z.val; //todo byte compare large numbers
   }
 
-  function _verifyBlock(bytes _wesProof) internal returns(bool) {
+  function _verifyBlock(bytes _prevAccum, uint blockNum) internal returns(bool) {
+    bytes memory b = BigNumber.modexp(_prevAccum, blocks[blockNum].blockProof.k, CRS_N);
+    BigNumber.instance memory _b;
+    _b.val = BigNumber.modexp(b, blocks[blockNum].blockProof.B, CRS_N);
+    BigNumber.instance memory _r;
+    _r.val = BigNumber.modexp(_prevAccum, blocks[blockNum].blockProof.r, CRS_N);
+    BigNumber.instance memory _z;
 
+    BigNumber.instance memory _N;
+    _N.val = CRS_N;
+    _z = BigNumber.modmul(_b, _r, _N);
+    //return blocks[blockNum].accumulator == _z.val; //todo byte compare large numbers
   }
 
 }
