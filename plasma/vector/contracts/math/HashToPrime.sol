@@ -8,7 +8,7 @@ library HashToPrime {
     // todo
   }
 
-  function hash(bytes memory input) public returns (uint64){
+  function hash(bytes32 input) public returns (uint64){
     uint j = 0;
     bytes memory h_input;
     bytes32 h_output;

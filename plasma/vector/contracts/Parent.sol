@@ -43,6 +43,7 @@ contract Parent is Ownable {
     Decoder.Block memory _block = encoded.decodeBlock();
     blockNum = blockNum.add(1);
     blocks[blockNum] = _block;
+    // todo verify proofs
   }
 
   function deposit() public payable {
@@ -84,8 +85,9 @@ contract Parent is Ownable {
 
   // Challenges
 
-  function challengeSpent() {
-
+  function challengeSpent(uint exitIndex, uint64[256] index) {
+    // invalidate exit by showing one coin in exit range does not open 
+    // to hashed transaction containing the exit initiators address
   }
 
   function requestExitProof(uint exitIndex) payable {
@@ -101,25 +103,29 @@ contract Parent is Ownable {
   function challengeInvalidInclusionProof(uint exitIndex) {
     // check (g^w)^x = A
     // wes check
-    // b^B * g^r = A
+    // b^B * h^r = A
     Decoder.Block memory _block = blocks[blockNum];
     bytes memory A = _block.accumulator;
 
-    bytes memory b = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.k, CRS_N);
-    BigNumber.instance memory _b;
-    _b.val = BigNumber.modexp(b, exits[exitIndex].coinsProof.B, CRS_N);
-    BigNumber.instance memory _r;
-    _r.val = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.r, CRS_N);
-    BigNumber.instance memory _z;
-    _z = BigNumber.bn_mul(_b, _r);
-    //require(A == _z.val); //todo byte compare large numbers
+    require(_isContained(A, exitIndex));
   }
 
-  function challengeInvalidBlockProof(uint prevBlock, bytes proof) {
-    // check that A_t^x = A, where x is provided as a wes18 proof
-    Decoder.Block memory _block = blocks[prevBlock];
-    bytes memory A_t = _block.accumulator;
+  function challengeInvalidExitHTP(uint exitIndex) {
+    bytes memory h_input;
+    h_input = abi.encodePacked(CRS_g, exits[exitIndex].coinsProof.T);
+    bytes32 i = keccak256(h_input);
+    uint64 _B = HashToPrime.hash(i);
+    //require(_B == uint64(exits[exitIndex].coinsProof.B)); // todo bytesToUint64
+  }
 
+  // perhaps do check on block publish
+  function challengeInvalidBlockProof(uint prevBlock) {
+    // check that A_t^x = A, where x is provided as a wes18 proof
+    // b^B * g^r = A
+    Decoder.Block memory _block = blocks[prevBlock];
+    Decoder.Proof memory _proof = _block.blockProof;
+    bytes memory A_t = _block.accumulator;
+    // todo _verifyBlock
   }
 
   function challengeInvalidPrime(uint128 index) {
@@ -141,12 +147,18 @@ contract Parent is Ownable {
 
   // Utils
 
-  function _setChallenged() {
-    
-  }
+  function _isContained(bytes _accumulator, uint exitIndex) internal returns(bool) {
+    bytes memory b = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.k, CRS_N);
+    BigNumber.instance memory _b;
+    _b.val = BigNumber.modexp(b, exits[exitIndex].coinsProof.B, CRS_N);
+    BigNumber.instance memory _r;
+    _r.val = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.r, CRS_N);
+    BigNumber.instance memory _z;
 
-  function _isContained(bytes _proof) internal returns(bool) {
-    // todo
+    BigNumber.instance memory _N;
+    _N.val = CRS_N;
+    _z = BigNumber.modmul(_b, _r, _N);
+    //return _accumulator == _z.val; //todo byte compare large numbers
   }
 
   function _verifyBlock(bytes _wesProof) internal returns(bool) {
