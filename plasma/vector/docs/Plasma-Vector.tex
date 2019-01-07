@@ -10,13 +10,13 @@
 
 This work presents an application of cryptographic universal accumulators [5] that was expanded upon in the blockchain setting by Boneh et al [1]. We apply these RSA accumulators in Plasma [2] and show that Vector can scale to high transaction throughput with low overhead for clients (potentially at the expensive of increased prover complexity from the operator or service nodes...TODO). Vectors [] (VC) have the property of binding data to a position in a list and we explore why this is a desired property in the Plasma Cash []. Using VC with 160 bit message spaces, we show how to construct a key-value map in an accumulator that can hold Ethereum public keys. Our contribution is applying VCs to reducing the inclusion and exclusion proof size of Plasma Cash from an $O(n)$ and $O(b \log n)$ respectively, where $b$ is a number of blocks committed and $n$ is the number of coins a user owns, to an $O(1)$ for both. We will see that replacing the merkle tree entirely with a VC accumulator can increase the granularity of Plasma Cash/flow to allow for smaller payments and \textit{fragmentation} no longer is an issue. It is noted that this work relies on a trusted setup for the RSA group order and the adaptive root assumption. 
 
-As with previous Plasma designs, this paper will detail the \textit{deposit}, \textit{send}, and \textit{exit} components which follow directly from Cash[]. The Plasma Vector parent contract does not verify the correctness of state transitions, it only provides a ledger to record accumulator commitments. We fall back on the Plasma Cash challenge functions to ensure that invalid transitions cannot exit. In this case, the state transition is simply defined as updating the owner public key of a position(s) in the accumulator. Verifying the correctness of accumulator updates involves inspecting the public key at position $x_i$ in $A$, the previous committed accumulator value, matches the signature witness and that $A’$ updates the value at $x_i$ to the new public key. 
+As with previous Plasma designs, this paper will detail the \textit{deposit}, \textit{send}, and \textit{exit} components which follow directly from Cash[]. The Plasma Vector parent contract does not verify the correctness of state transitions, it only provides a ledger to record accumulator commitments. We fall back on the Plasma Cash challenge functions to ensure that invalid transitions cannot exit. In this case, the state transition is simply defined as updating the owner public key of a position(s) in the accumulator. Verifying the correctness of accumulator updates involves inspecting the public key at position $x_i$ in $A$, the previous committed accumulator value, matches the signature witness and that $A'$ updates the value at $x_i$ to the new public key. 
 \\
 \\
 
 \centerline{\textit{Vector Commitments}}
 
-A \textit{vector commitment} (VC) [] is a special case of RSA accumulator with the added property of \textit{position binding}. RSA accumulators prove inclusion and exclusion of prime numbers in a set, but do not allow for arbitrary values to be accumulated to preserve the security properties of the RSA group, [] does note that arbitrary values may work as long as they have a unique prime factorization. VC allow for an $M$-bit $\{0,1\}^\lambda$ message to be committed to each of the accumulator vector components by assigning prime numbers to the message bits. Committing to a vector allows the accumulator to act like a sparse merkle tree where we can make a statement that for $x$, a given vector, that for any component index $x_i$ opening a value $v$ that a forger cannot provide a $v’$ s.t. $x_i$ opens to both $v$ and $v’$. While a merkle tree has a proof size of $O(\lambda \log n)$, where $\lambda$ is the security parameter of the hash function, to open a value at a position, VC have just constant sized openings. They also carry over the batching properties derived from previous accumulator schemes [ref accumulators] so that Plasma Vector can batch proofs that any number of values are committed to a given index in constant space.
+A \textit{vector commitment} (VC) [] is a special case of RSA accumulator with the added property of \textit{position binding}. RSA accumulators prove inclusion and exclusion of prime numbers in a set, but do not allow for arbitrary values to be accumulated to preserve the security properties of the RSA group, [] does note that arbitrary values may work as long as they have a unique prime factorization. VC allow for an $M$-bit $\{0,1\}^\lambda$ message to be committed to each of the accumulator vector components by assigning prime numbers to the message bits. Committing to a vector allows the accumulator to act like a sparse merkle tree where we can make a statement that for $x$, a given vector, that for any component index $x_i$ opening a value $v$ that a forger cannot provide a $v'$ s.t. $x_i$ opens to both $v$ and $v'$. While a merkle tree has a proof size of $O(\lambda \log n)$, where $\lambda$ is the security parameter of the hash function, to open a value at a position, VC have just constant sized openings. They also carry over the batching properties derived from previous accumulator schemes [ref accumulators] so that Plasma Vector can batch proofs that any number of values are committed to a given index in constant space.
 \\
 \\
 
@@ -65,19 +65,26 @@ To prove that $x_1$ opens to $v_1$ we would ask for a batched inclusion proof fo
 
 [todo]
 
-Here we define the protocols that Plasma Vector uses to ensure that the inclusion and exclusion proof size is manageable. Recall [vitalik post], that for a given RSA accumulator $A = g^u$, if we would like to show that an element $v$ is in $A$ the prover must generate a cofactor $x$ s.t. $A = (g^v)^x$. In our case $x$ will be large as it represents all IDs in our coin space, so using it as part of the proof is not feasible. Using an extension of the Wesoloski PoE [] proposed by [bunnz] reduces the burden of passing $x$ which is approx $|u|$ we now only pass values $|N|$ and $B$ which are only 1024 bit security parameters.
+Here we define the protocols that Plasma Vector uses to ensure that the inclusion and exclusion proof size is manageable. Recall [vitalik post], that for a given RSA accumulator $A = g^u$, if we would like to show that an element $v$ is in $A$ the prover must generate a cofactor $x$ s.t. $A = (g^v)^x$. In our case $x$ will be large as it represents all IDs in our coin space, so using it as part of the proof is not feasible. Using an extension of the Wesolowski PoE [] proposed by [bunnz] reduces the burden of passing $x$ which is approx $|u|$ we now only pass values $|N|$ and $B$ which are only 1024 bit security parameters.
 
-
+The above PoE works for exponentiation of the form $2^T$ with fixed base $2$ or for powers of two. The exponentiation that we are trying to prove is of the form $g^x$ so we must alter Wes[18] and we again turn to the work of Boneh et al []. Sparing details we find that we can use NI-PoKE* to fit our needs for plasma. 
 
 \\ 
 \\
+
 \centerline{\textbf{Hash to Prime}}
 
 There are a few methods for assigning prime numbers and two places in Plasma vector that this will be required. In the PoKE scheme detailed above, $B$ is the output of a $H_{prime}$ function, and all of the indices of our sparse VC require an output from a $H_{prime}$. In order to appropriately choose our output spaces, we need to observe the distribution of primes in the number line. Luckily prime numbers occur quite frequently. To illustrate this we can roughly estimate the density of primes using $n/\ln(n)$. Given $10^{50}$ numbers we might expect $10^{50}/\ln(10^{50})=10^{40} $ primes.
 
 A strategy for $H_{prime}$ for PoKE is using an iterative function and a counter to hash from the domain $Z_{2^{\lambda}}$]to prime [CS99][FT14]. We can use a function that assigns smaller primes to the vector indices as was described by [] with, $f(i)=2(i+2)* \log_2(i+2)^2$. If primality checking becomes too expensive then we may assign arbitrary large integers that have prime factorizations[TODO check this]. Additionally the prover could provide a nonce s.t. $H(nonce||index)=l$ with $l \in Primes(\lambda)$. This would reduce the primality checks to just one instead of $\lambda$ as is with the iterative counter function method.
 
-A security requirement of the Wesoloski PoKE is that $B > n$ where $n$ is the length of the vector $A$. If $n=2^{48}$ primes then we will have to ensure that $B > 10^{15}$ and prime. We can make a criteria of the prime selection choose primes within the range of $[2^{48}, 2^{62}]$.
+A security requirement of the Wesolowski PoKE is that $B > n$ where $n$ is the length of the vector $A$. If $n=2^{48}$ primes then we will have to ensure that $B > 10^{15}$ and prime. We can make a criteria of the prime selection; choose primes within the range of $[2^{48}, 2^{62}]$. This will add extra cycles to the hash to prime function as we must decline valid primes that are too small. [Todo probability stats on increased complexity to htp].
+
+\\
+\\
+\centerline{\textit{Bitmaps}}
+
+Bitmaps are a way to compress a large set of integers into an array of $\{0,1\}$. [Todo]
 \\
 \\
 
@@ -89,7 +96,7 @@ Below we outline how vector based accumulators may be implemented in Plasma Cash
 \\
 \centerline{\textbf{Deposit}}
 
-This is done in the same way as Plasma Cash with an onchain deposit to the plasma parent contract. The only difference here will be the assignment of a unique vector that will identify a new range of tokens. We have $2^{48}$ primes to represent 160-bit public keys in a vector of size $2^{40}$. With 
+This is done in the same way as Plasma Cash with an onchain deposit to the plasma parent contract. The only difference here will be the assignment of a unique vector that will identify a new range of tokens. We have $2^{48}$ primes to represent $\lamda$ = 256-bit values (keccak hash) in a vector of size $2^{40}$. 
 \\
 \\
 
@@ -97,31 +104,58 @@ This is done in the same way as Plasma Cash with an onchain deposit to the plasm
 
 The send format allows for an owner of a batch of coins to be able to generate a transaction that assigns all or a subset of their owned coins to a new owner. 
 
-if you send me 1234 in one tx, and say they all have individual transaction histories, you still need to send the individual ones before the group tx, then if i send 2,3 i send the individual history, that 1234 tx and 23 tx
+A note on plasma cash history:
+If coins by index [1,2,3,4] are sent in one tx, and say they all have individual transaction histories, you still need to send the individual histories to the receiver before the group tx, then if [2,3] are sent on again by the receiver, the next recipient needs the individual history for that [1,2,3,4] tx and the current [2,3] tx.
 
-I.e.
+Further example.
 
 b0 = tx1 send 1 A -> B...tx2 send 2 A -> B...tx3 send 3 A -> B...tx4 send 4 A -> B
 b1 = tx5 send 1234 B -> C
-b2 = tx6 send 34 C - D
-\\
-\\
+b2 = tx6 send 34 C -> D
 
-\centerline{\textbf{Batched Exits}}
+TX history for B = tx[1,2,3,4]
+TX history for C = tx[1,2,3,4,5]
+TX history for D = tx[1,2,3,4,5,6]
 
-A challenge of Plasma Vector is the ability to mass exit a large batch of coins. If we have $2^{40}$ vector components, and we want to represent a Finney (0.001 ether), we need 1000 ids per ether. So we can represent 2^40/1000 = 1,099,511,627.776 ether. There are a total of 103,893,897.44 ether in circulation currently so we can represent roughly  10x that. Now you may not want to do that considering if all of the value was on layer2, layer1 is probably no longer secure. So let's reduce that a bit. 0.000001 ether per component would be $2^{40}/1000000$ = 1,099,511.62 ether. That's about 1 percent of the current total supply on our chain with a granularity of being able to send as low as 0.000001 ether
-
-SSTORE requires 20k gas per 32 byte word, so if we cram 4 * 64 bit numbers in that’s 5k*n. If we have a granularity of 0.00001 ether it would require 10,000 IDs to exit 1 ether worth of coins. If we need to register just 10k IDs in one exit then this would require 50mm gas and would not be practical. 
+In plasma vector we are using an accumulator that stores the current state in each slot at all times rather than null values in the sparse merkle tree leaves. This means that only the latest valid state transition of an owned coin (namely, the transition that sent to coin to the owner) is needed. This will further be discussed in the Coin Exit Challenge section below.
 
 \\
 \\
-\centerline{\textit{Bitmaps}}
 
-Bitmaps are a way to compress a large set of integers into an array of $\{0,1\}$ 
-\\
-\\
+\centerline{\textbf{Exits}}
+
+When using a sparse merkle tree to store transaction data in the accumulator, you must store null values for every block that nothing transacts for a given index. This would require that exits present the inclusion proof of their receive transaction against a previous block. Since our vector accumulator always holds the latest state of an index (the owners receive tx) then exits should be initiated against the current block commitment in the parent chain. The only exception to this rule will be for challenges detailed below.
+
+
+\centerline{\textit{Batched Exits}}
+
+A challenge of Plasma Vector is the ability to mass exit a large batch of coins. If we have $2^{40}$ vector components, and we want to represent a Finney (0.001 ether), we need 1000 ids per ether. So we can represent 2^40/1000 = 1,099,511,627.776 ether. There are a total of 103,893,897.44 ether in circulation currently so we can represent roughly  10x that. Now you may not want to do that considering if all of the value was on layer2, layer1 is probably no longer secure. So let's reduce that a bit. 0.000001 ether per component would be $2^{40}/1000000$ = 1,099,511.62 ether. That's about 1 percent of the current total supply on our chain with a granularity of being able to send as low as 0.000001 ether. This does not mean that the exit cost allows for such a small denomination. We must still gather exact gas costs for optimal and challenge based exits to determine what the lowest denomination of the plasma chain may securely be. 
+
+[todo: illustrate what happens if you have denominations worth less than the cost to exit]
+
+SSTORE requires 20k gas per 32 byte word, so if we cram 4 * 64 bit numbers in that’s 5k*n. If we have a granularity of 0.00001 ether it would require 10,000 IDs to exit 1 ether worth of coins. If we need to register just 10k IDs in one exit then this would require 50mm gas and would not be practical. We must allow for individual ids to be batched per exit. We mark these batches by owned ranges. Now we may have to exit a total of the number of fragmented owned ranges of ids that a single user has. Atomic swaps may reduce the fragments but without further research it is hard to say if there is a proper strategy to defragment. 
+
+When an owner’s client begins to fragment too much we could suggest an option to exit all ranges and re-enter with less fragmented denominations.
+
+\centerline{\textit{Challenges}}
+
+\centerline{\textit{Coin Exit challenges}}
+
+When an adversary attempts to exit with an honest users id, they may present an inclusion proof against an older accumulator commitment to reveal any future commitments to invalid state transitions. 
+
+challengSpentCoin
+
+challege...
+
+Operator challenges
+challengeInvalidHashToPrime
+challenge
 
 \centerline{\textbf{Smart Contract}}
+
+deposit
+
+submitBlock
 
 [TODO]
 \\

@@ -585,7 +585,7 @@ library BigNumber {
       * parameter: instance user_result
       * returns: instance user_result.
       */
-    function mod_inverse(instance base, instance modulus, instance user_result) internal view returns(instance){
+    function mod_inverse(instance memory base, instance memory modulus, instance memory user_result) internal view returns(instance){
         require(base.neg==false && modulus.neg==false); //assert positivity of inputs.
             
         /*
@@ -606,7 +606,7 @@ library BigNumber {
       * parameter: instance _in
       * returns: uint ret.
       */  
-    function is_odd(instance _in) internal pure returns(uint ret){
+    function is_odd(instance memory _in) internal pure returns(uint ret){
         assembly{
             let in_ptr := add(mload(_in), mload(mload(_in))) //go to least significant word
             ret := mod(mload(in_ptr),2)                      //..and mod it with 2. 
@@ -626,7 +626,7 @@ library BigNumber {
       * parameter: bool signed
       * returns: int.
       */
-    function cmp(instance a, instance b, bool signed) internal pure returns(int){
+    function cmp(instance memory a, instance memory b, bool signed) internal pure returns(int){
         int trigger = 1;
         if(signed){
             if(a.neg && b.neg) trigger = -1;
@@ -678,7 +678,7 @@ library BigNumber {
       * parameter: instance[] randomness
       * returns: bool indicating primality.
       */
-    function is_prime(instance a, instance[3] randomness) internal returns (bool){
+    function is_prime(instance memory a, instance[3] memory randomness) internal returns (bool){
         instance memory  zero = instance(hex"0000000000000000000000000000000000000000000000000000000000000000",false,0); 
         instance memory   one = instance(hex"0000000000000000000000000000000000000000000000000000000000000001",false,1); 
         instance memory   two = instance(hex"0000000000000000000000000000000000000000000000000000000000000002",false,2); 
@@ -718,7 +718,7 @@ library BigNumber {
         return true;
     }
 
-    function get_k(instance a1) private returns (uint k){
+    function get_k(instance memory a1) private returns (uint k){
         k = 0;
         uint mask=1;
         uint a1_ptr;
@@ -759,7 +759,7 @@ library BigNumber {
     }
 
     
-    function witness(instance w, instance a, instance a1, instance a1_odd, uint k) internal returns (int){
+    function witness(instance memory w, instance memory a, instance memory a1, instance memory a1_odd, uint k) internal returns (int){
         // returns -  0: likely prime, 1: composite number (definite non-prime).
         instance memory one = instance(hex"0000000000000000000000000000000000000000000000000000000000000001",false,1); 
         instance memory two = instance(hex"0000000000000000000000000000000000000000000000000000000000000002",false,2); 
@@ -794,7 +794,7 @@ library BigNumber {
       * parameter: bool signed
       * returns: int.
       */
-    function right_shift(instance dividend, uint value) internal pure returns(instance){
+    function right_shift(instance memory dividend, uint value) internal pure returns(instance memory){
         //TODO use memcpy for cheap rightshift where input is multiple of 8 (byte size)
         bytes memory result;
         uint word_shifted;
@@ -839,7 +839,7 @@ library BigNumber {
         return dividend;
     }
 
-    function left_shift(instance a) internal pure returns(uint) {
+    function left_shift(instance memory a) internal pure returns(uint) {
       //TODO
     }
 
@@ -851,7 +851,7 @@ library BigNumber {
       * parameter: instance a
       * returns: bytes32 hash.
       */
-    function hash(instance a) internal pure returns(bytes32 _hash) {
+    function hash(instance memory a) internal pure returns(bytes32 _hash) {
         //amount of words to hash = all words of the value and three extra words: neg, bitlen & value length.     
         assembly {
             _hash := sha3( add(a,0x20), add (mload(mload(a)), 0x60 ) ) 
@@ -863,7 +863,7 @@ library BigNumber {
       * parameter: bytes a
       * returns: uint res.
       */
-    function get_bit_length(bytes val) internal pure returns(uint res){
+    function get_bit_length(bytes memory val) internal pure returns(uint res){
         uint msword; 
         assembly {msword := mload(add(val,0x20))}          //get msword of result
         res = get_word_length(msword) + (val.length-32)*8; //get bitlen pf msword, add to size of remaining words.
