@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.0;
 
 import {Ownable} from "./Ownable.sol";
 import {SafeMath} from "./math/SafeMath.sol";
@@ -39,7 +39,7 @@ contract Parent is Ownable {
     numExit = 0;
   }
 
-  function submitBlock(bytes memory encoded) onlyOwner {
+  function submitBlock(bytes memory encoded) public onlyOwner {
     Decoder.Block memory _block = encoded.decodeBlock();
     blockNum = blockNum.add(1);
     blocks[blockNum] = _block;
@@ -77,7 +77,7 @@ contract Parent is Ownable {
     numExit = numExit.sub(1);
   }
 
-  function finalizeExit(uint exitIndex) {
+  function finalizeExit(uint exitIndex) public {
     require(now > exits[exitIndex].timeStart + EXIT_TIMEOUT);
     require(exits[exitIndex].challenge == 0);
     // todo delete exit anyway if challenge is set
@@ -87,23 +87,23 @@ contract Parent is Ownable {
 
   // Challenges
 
-  function challengeSpent(bytes txData, uint64[256] index) {
+  function challengeSpent(bytes memory txData, uint64[256] memory index) public {
     // invalidate block accumulator by showing that a given index
     // was altered without the proper signature witness
   }
 
-  function requestExitProof(uint exitIndex) payable {
+  function requestExitProof(uint exitIndex) public payable {
     // ask an exit to reveal the inclusion proof, stalling the exit until revealed
     // todo add bond check
     exits[exitIndex].challenge = 1;
   }
 
-  function registerInlcusionProof(uint exitIndex, bytes proof) {
+  function registerInlcusionProof(uint exitIndex, bytes memory proof) public {
     exits[exitIndex].coinsProof = proof.decodeProof();
     exits[exitIndex].challenge = 0;
   }
 
-  function challengeInvalidInclusionProof(uint exitIndex) {
+  function challengeInvalidInclusionProof(uint exitIndex) public {
     // check (g^w)^x = A
     // wes check
     // b^B * h^r = A
@@ -113,7 +113,7 @@ contract Parent is Ownable {
     require(_isContained(A, exitIndex));
   }
 
-  function challengeInvalidExitHTP(uint exitIndex) {
+  function challengeInvalidExitHTP(uint exitIndex) public {
     bytes memory h_input;
     h_input = abi.encodePacked(CRS_g, exits[exitIndex].coinsProof.T);
     bytes32 i = keccak256(h_input);
@@ -122,7 +122,7 @@ contract Parent is Ownable {
   }
 
   // perhaps do check on block publish
-  function challengeInvalidBlockProof(uint prevBlock) {
+  function challengeInvalidBlockProof(uint prevBlock) public {
     // check that A_t^x = A, where x is provided as a wes18 proof
     // b^B * g^r = A
     Decoder.Block memory _block = blocks[prevBlock];
@@ -131,26 +131,26 @@ contract Parent is Ownable {
     // todo _verifyBlock
   }
 
-  function challengeInvalidPrime(uint128 index) {
+  function challengeInvalidPrime(uint128 index) public {
     // take the index in question, see that it is not in the exit range
     // do one hash to prime on to see index hashes to prime
     // require exits[exitid].proof contains prime
   }
 
-  function challengeNotPrime(uint128 primeCheck) {
+  function challengeNotPrime(uint128 primeCheck) public {
     // Provide witness that an exit is comprised of non-prime number
     //uint128 _witness = HashToPrime.genNonPrimeWitness(primeCheck);
     require(!HashToPrime.isProbablePrime(primeCheck));
     // require exits[exitid].proof contains primeCheck
   }
 
-  function challengeInvalidRange() {
+  function challengeInvalidRange() public {
     // show that the indicies presented in exit are not valid
   }
 
   // Utils
 
-  function _isContained(bytes _accumulator, uint exitIndex) internal returns(bool) {
+  function _isContained(bytes memory _accumulator, uint exitIndex) internal returns(bool) {
     bytes memory b = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.k, CRS_N);
     BigNumber.instance memory _b;
     _b.val = BigNumber.modexp(b, exits[exitIndex].coinsProof.B, CRS_N);
@@ -164,12 +164,12 @@ contract Parent is Ownable {
     //return _accumulator == _z.val; //todo byte compare large numbers
   }
 
-  function _verifyBlock(bytes _prevAccum, uint blockNum) internal returns(bool) {
-    bytes memory b = BigNumber.modexp(_prevAccum, blocks[blockNum].blockProof.k, CRS_N);
+  function _verifyBlock(bytes memory _prevAccum, uint _blockNum) internal returns(bool) {
+    bytes memory b = BigNumber.modexp(_prevAccum, blocks[_blockNum].blockProof.k, CRS_N);
     BigNumber.instance memory _b;
-    _b.val = BigNumber.modexp(b, blocks[blockNum].blockProof.B, CRS_N);
+    _b.val = BigNumber.modexp(b, blocks[_blockNum].blockProof.B, CRS_N);
     BigNumber.instance memory _r;
-    _r.val = BigNumber.modexp(_prevAccum, blocks[blockNum].blockProof.r, CRS_N);
+    _r.val = BigNumber.modexp(_prevAccum, blocks[_blockNum].blockProof.r, CRS_N);
     BigNumber.instance memory _z;
 
     BigNumber.instance memory _N;

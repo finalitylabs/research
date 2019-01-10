@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.5.0;
 
 import { RLPReader } from "./RLPReader.sol";
 import {HashToPrime} from "./math/HashToPrime.sol";
@@ -29,26 +29,29 @@ library Decoder {
   }
 
   struct TX {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
     // todo, less important, any format should work
     // inluding experiements with hashed scripts and challenges
   }
 
-  function decodeBlock(bytes memory rlpBytes) internal returns(Block) {
+  function decodeBlock(bytes memory rlpBytes) internal returns(Block memory) {
     return _decodeBlock(rlpBytes.toRlpItem().toList());
   }
 
-  function _decodeBlock(RLPReader.RLPItem[] items) private returns(Block) {
+  function _decodeBlock(RLPReader.RLPItem[] memory items) private returns(Block memory) {
     return Block({
       accumulator: items[0].toBytes(),
       blockProof: _decodeProof(items[1].toList())
     });
   }
 
-  function decodeExit(bytes memory rlpBytes) internal returns(Exit) {
+  function decodeExit(bytes memory rlpBytes) internal returns(Exit memory) {
     return _decodeExit(rlpBytes.toRlpItem().toList());
   }
 
-  function _decodeExit(RLPReader.RLPItem[] items) private returns(Exit) {
+  function _decodeExit(RLPReader.RLPItem[] memory items) private returns(Exit memory) {
     return Exit({
       owner: msg.sender,
       numRanges: uint32(items[0].toUint()),
@@ -59,19 +62,19 @@ library Decoder {
     });
   }
 
-  function _decodeOffsets(RLPReader.RLPItem[] items) private returns(uint32[]) {
+  function _decodeOffsets(RLPReader.RLPItem[] memory items) private returns(uint32[] memory) {
     uint32[] memory arr;
-    for(var i=0; i<items.length; i++){
+    for(uint i=0; i<items.length; i++){
       arr[i] = uint32(items[i].toUint());
     }
     return arr;
   }
 
-  function decodeProof(bytes memory rlpBytes) internal returns(ExpProof) {
+  function decodeProof(bytes memory rlpBytes) internal returns(ExpProof memory) {
     return _decodeProof(rlpBytes.toRlpItem().toList());
   }
 
-  function _decodeProof(RLPReader.RLPItem[] items) private returns(ExpProof) {
+  function _decodeProof(RLPReader.RLPItem[] memory items) private returns(ExpProof memory) {
     return ExpProof({
       T: items[0].toBytes(),
       r: items[1].toBytes(),

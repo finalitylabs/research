@@ -1,8 +1,10 @@
-pragma solidity 0.4.24;
+pragma solidity 0.5.0;
 
 import {BigNumber} from "./BigNumber.sol";
+import {RLPReader} from "../RLPReader.sol";
 
 library HashToPrime {
+  using RLPReader for bytes;
 
   function genNonPrimeWitness(uint128 _n) public returns(uint64) {
     // todo
@@ -21,13 +23,14 @@ library HashToPrime {
       h_input = abi.encodePacked(prefix, j, input);
       h_output = keccak256(h_input);
 
-      prime = uint64(h_output);
+      RLPReader.RLPItem memory _p = RLPReader.toRlpItem(abi.encodePacked(h_output));
+      prime = uint64(RLPReader.toUint(_p));
 
       if (isProbablePrime(prime)) {
         return prime;
       }
 
-      if(j==200) return;
+      if(j==200) return 0;
       j++;
     }
   }
@@ -70,13 +73,14 @@ library HashToPrime {
 
         //b0 = a**m%n;
         b0 = BigNumber.modexp(a, m, n);
+        RLPReader.RLPItem memory _b0 = RLPReader.toRlpItem(b0);
 
-        if(bytesToUint(b0) == 1 || bytesToUint(b0) == phi) {
+        if(RLPReader.toUint(_b0) == 1 || RLPReader.toUint(_b0) == phi) {
           return true; // probably prime
         }
 
         for(uint z=0; z<s; z++) {
-          b1 = (bytesToUint(b0)**2)%_n;
+          b1 = (RLPReader.toUint(_b0)**2)%_n;
           if(b1 == phi) {
             return true; // probably prime
           }
@@ -94,11 +98,12 @@ library HashToPrime {
     return false;
   }
 
-  function bytesToUint(bytes b) public returns (uint256){
-    uint256 number;
-    for(uint i=0;i<b.length;i++){
-      number = number + uint(b[i])*(2**(8*(b.length-(i+1))));
-    }
-    return number;
-  }
+  // function bytesToUint(bytes32 memory b) public returns (uint256){
+  //   uint256 number;
+  //   for(uint i=0;i<b.length;i++){
+  //     // RLPReader memory _b = RLPReader.toItem(b[i]);
+  //     number = number + _b*(2**(8*(b.length-(i+1))));
+  //   }
+  //   return number;
+  // }
 }
