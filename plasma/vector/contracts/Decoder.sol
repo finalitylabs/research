@@ -36,30 +36,64 @@ library Decoder {
     // inluding experiements with hashed scripts and challenges
   }
 
-  function decodeBlock(bytes memory rlpBytes) internal returns(Block memory) {
+  function decodeBlock(bytes memory rlpBytes) internal returns(
+      bytes memory accumulator,
+      bytes memory T,
+      bytes memory r,
+      bytes memory k,
+      bytes memory B
+  ) {
     return _decodeBlock(rlpBytes.toRlpItem().toList());
   }
 
-  function _decodeBlock(RLPReader.RLPItem[] memory items) private returns(Block memory) {
-    return Block({
-      accumulator: items[0].toBytes(),
-      blockProof: _decodeProof(items[1].toList())
-    });
+  function _decodeBlock(RLPReader.RLPItem[] memory items) private returns(
+    bytes memory accumulator,
+    bytes memory T,
+    bytes memory r,
+    bytes memory k,
+    bytes memory B
+  ) {
+    (
+      bytes memory a,
+      bytes memory b,
+      bytes memory c,
+      bytes memory d
+    ) = _decodeProof(items[1].toList());
+    return(items[0].toBytes(),a,b,c,d);
   }
 
-  function decodeExit(bytes memory rlpBytes) internal returns(Exit memory) {
+  function decodeExit(bytes memory rlpBytes) internal returns(
+    address owner,
+    uint32 numRanges,
+    uint256 timeStart,
+    uint32[] memory offsets,
+    bytes memory T,
+    bytes memory r,
+    bytes memory k,
+    bytes memory B,
+    uint8 challenge
+  ) {
     return _decodeExit(rlpBytes.toRlpItem().toList());
   }
 
-  function _decodeExit(RLPReader.RLPItem[] memory items) private returns(Exit memory) {
-    return Exit({
-      owner: msg.sender,
-      numRanges: uint32(items[0].toUint()),
-      timeStart: uint256(items[1].toUint()),
-      offsets: _decodeOffsets(items[2].toList()),
-      coinsProof: ExpProof('0x','0x','0x','0x'),
-      challenge: 0
-    });
+  function _decodeExit(RLPReader.RLPItem[] memory items) private returns(
+    address owner,
+    uint32 numRanges,
+    uint256 timeStart,
+    uint32[] memory offsets,
+    bytes memory T,
+    bytes memory r,
+    bytes memory k,
+    bytes memory B,
+    uint8 challenge      
+  ) {
+    return(
+      msg.sender,
+      uint32(items[0].toUint()),
+      uint256(items[1].toUint()),
+      _decodeOffsets(items[2].toList()),
+      '0x','0x','0x','0x', 0
+    );
   }
 
   function _decodeOffsets(RLPReader.RLPItem[] memory items) private returns(uint32[] memory) {
@@ -70,17 +104,33 @@ library Decoder {
     return arr;
   }
 
-  function decodeProof(bytes memory rlpBytes) internal returns(ExpProof memory) {
-    return _decodeProof(rlpBytes.toRlpItem().toList());
+  function decodeProof(bytes memory rlpBytes) internal returns(
+    bytes memory T,
+    bytes memory r,
+    bytes memory k,
+    bytes memory B
+  ) {
+    (
+      bytes memory a,
+      bytes memory b,
+      bytes memory c,
+      bytes memory d
+    ) = _decodeProof(rlpBytes.toRlpItem().toList());
+    return(a,b,c,d);
   }
 
-  function _decodeProof(RLPReader.RLPItem[] memory items) private returns(ExpProof memory) {
-    return ExpProof({
-      T: items[0].toBytes(),
-      r: items[1].toBytes(),
-      k: items[2].toBytes(),
-      B: items[3].toBytes()
-    });
+  function _decodeProof(RLPReader.RLPItem[] memory items) private returns(
+    bytes memory T,
+    bytes memory r,
+    bytes memory k,
+    bytes memory B
+  ) {
+    return(
+      items[0].toBytes(),
+      items[1].toBytes(),
+      items[2].toBytes(),
+      items[3].toBytes()
+    );
   }
 
 }

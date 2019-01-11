@@ -21,8 +21,8 @@ contract Parent is Ownable {
 
   mapping(address => bytes32[]) private _depositHashes;
   mapping(address => uint[]) private offsets; // todo: deal with splitting 
-  mapping(uint => Decoder.Exit) public exits;
-  mapping(uint => Decoder.Block) public blocks;
+  mapping(uint => Decoder.Exit) exits;
+  mapping(uint => Decoder.Block) blocks;
 
   uint currOffset;
   uint numExit;
@@ -40,7 +40,21 @@ contract Parent is Ownable {
   }
 
   function submitBlock(bytes memory encoded) public onlyOwner {
-    Decoder.Block memory _block = encoded.decodeBlock();
+    (
+      bytes memory a,
+      bytes memory b,
+      bytes memory c,
+      bytes memory d,
+      bytes memory e
+    ) = Decoder.decodeBlock(encoded);
+
+    Decoder.Block memory _block;
+    _block.accumulator = a;
+    _block.blockProof.T = b;
+    _block.blockProof.r = c;
+    _block.blockProof.k = d;
+    _block.blockProof.B = e;
+
     blockNum = blockNum.add(1);
     blocks[blockNum] = _block;
     // todo verify proofs?
@@ -61,11 +75,31 @@ contract Parent is Ownable {
   }
 
   function startExit(bytes memory encoded) public payable {
-    Decoder.Exit memory _exit = encoded.decodeExit();
+    (
+      address a, //owner,
+      uint32 b, //numRanges,
+      uint256 c, //timeStart,
+      uint32[] memory d, // offsets,
+      bytes memory e, // T,
+      bytes memory f, //r,
+      bytes memory g, //k,
+      bytes memory h, //B,
+      uint8 i //challenge
+    ) = Decoder.decodeExit(encoded);
     //require(_isContained(_exit.proof));
     // todo add bond check
     numExit.add(1);
+
+    Decoder.Exit memory _exit;
     _exit.timeStart = now;
+    _exit.owner = a;
+    _exit.numRanges = b;
+    _exit.offsets = d;
+    _exit.coinsProof.T = e;
+    _exit.coinsProof.r = f;
+    _exit.coinsProof.k = g;
+    _exit.coinsProof.B = h;
+
     exits[numExit] = _exit; // dont store proof bytes or run inclusion check
     numExit = numExit.add(1);
   }
@@ -99,7 +133,17 @@ contract Parent is Ownable {
   }
 
   function registerInlcusionProof(uint exitIndex, bytes memory proof) public {
-    exits[exitIndex].coinsProof = proof.decodeProof();
+    (
+      bytes memory a,
+      bytes memory b,
+      bytes memory c,
+      bytes memory d
+    ) = Decoder.decodeProof(proof);
+
+    exits[exitIndex].coinsProof.T = a;
+    exits[exitIndex].coinsProof.r = b;
+    exits[exitIndex].coinsProof.k = c;
+    exits[exitIndex].coinsProof.B = d;
     exits[exitIndex].challenge = 0;
   }
 
