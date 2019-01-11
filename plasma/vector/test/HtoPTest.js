@@ -2,6 +2,8 @@ const tryCatch = require("./exceptions.js").tryCatch;
 const errTypes = require("./exceptions.js").errTypes;
 
 const HashToPrimeSol = artifacts.require("HashToPrime.sol")
+const BigNumber = artifacts.require("BigNumber.sol")
+const RLPReader = artifacts.require("RLPReader.sol")
 const ParentSol = artifacts.require("Parent.sol")
 
 const Web3latest = require('web3-utils')
@@ -20,16 +22,16 @@ contract('', function(accounts) {
 
   before(async () => {
     htp = await HashToPrimeSol.new()
-    chain = await ParentSol.new()
+    //chain = await ParentSol.new()
   })
 
   it('calls hash to prime', async () => {
-    // let res = await htp.hash('0x07')
-    // let gasUsed = res.receipt.gasUsed
-    // console.log(gasUsed)
+    let res = await htp.hash('0x03')
+    let gasUsed = res.receipt.gasUsed
+    console.log(gasUsed)
 
-    // let test2 = await htp.test2()
-    // console.log(test2.toString())
+    let test2 = await htp.test2()
+    console.log(test2.toString())
 
     // for(var i=0; i<100; i++) {
     //   let test = await htp.test(i)
@@ -39,9 +41,9 @@ contract('', function(accounts) {
     //   // console.log(test2.toString())
     // }
 
-    res = await chain.deposit({value:Web3latest.toWei('0.0002')})
-    let amt = await chain._amt()
-    console.log(amt.toString())
+    // res = await chain.deposit({value:Web3latest.toWei('0.0002')})
+    // let amt = await chain._amt()
+    // console.log(amt.toString())
   })
 
   it('', async () => {
