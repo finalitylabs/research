@@ -21,17 +21,17 @@ let htp
 contract('', function(accounts) {
 
   before(async () => {
-    htp = await HashToPrimeSol.new()
-    //chain = await ParentSol.new()
+    //htp = await HashToPrimeSol.new()
+    chain = await ParentSol.new()
   })
 
   it('calls hash to prime', async () => {
-    let res = await htp.hash('0x03')
-    let gasUsed = res.receipt.gasUsed
-    console.log(gasUsed)
+    // let res = await htp.hash('0x03')
+    // let gasUsed = res.receipt.gasUsed
+    // console.log(gasUsed)
 
-    let test2 = await htp.test2()
-    console.log(test2.toString())
+    // let test2 = await htp.test2()
+    // console.log(test2.toString())
 
     // for(var i=0; i<100; i++) {
     //   let test = await htp.test(i)
@@ -41,9 +41,13 @@ contract('', function(accounts) {
     //   // console.log(test2.toString())
     // }
 
-    // res = await chain.deposit({value:Web3latest.toWei('0.0002')})
-    // let amt = await chain._amt()
-    // console.log(amt.toString())
+    let res = await chain.deposit({value:Web3latest.toWei('0.0002')})
+    let amt = await chain._amt()
+    console.log(amt.toString())
+
+    res = await chain.challengeInvalidExitHTP('0x03')
+    let gasUsed = res.receipt.gasUsed
+    console.log(gasUsed)
   })
 
   it('', async () => {

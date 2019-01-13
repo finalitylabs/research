@@ -14,6 +14,15 @@ library Decoder {
     bytes B; // htp(g, T)
   }
 
+  struct Range {
+    uint start;
+    uint offset;
+  }
+
+  struct Ranges {
+    Range[] ownedRanges;
+  }
+
   struct Block {
     bytes accumulator;
     ExpProof blockProof;
@@ -23,7 +32,8 @@ library Decoder {
     address owner;
     uint32 numRanges;
     uint256 timeStart;
-    uint32[] offsets;
+    uint[] starts;
+    uint[] offsets;
     ExpProof coinsProof;
     uint8 challenge; // 1 means this exit is flagged for challenge
   }
@@ -66,12 +76,12 @@ library Decoder {
     address owner,
     uint32 numRanges,
     uint256 timeStart,
-    uint32[] memory offsets,
-    bytes memory T,
-    bytes memory r,
-    bytes memory k,
-    bytes memory B,
-    uint8 challenge
+    uint[] memory starts,
+    uint[] memory offsets//,
+    // bytes memory T,
+    // bytes memory r,
+    // bytes memory k,
+    // bytes memory B
   ) {
     return _decodeExit(rlpBytes.toRlpItem().toList());
   }
@@ -80,26 +90,27 @@ library Decoder {
     address owner,
     uint32 numRanges,
     uint256 timeStart,
-    uint32[] memory offsets,
-    bytes memory T,
-    bytes memory r,
-    bytes memory k,
-    bytes memory B,
-    uint8 challenge      
+    uint[] memory starts,
+    uint[] memory offsets//,
+    // bytes memory T,
+    // bytes memory r,
+    // bytes memory k,
+    // bytes memory B   
   ) {
     return(
       msg.sender,
       uint32(items[0].toUint()),
       uint256(items[1].toUint()),
-      _decodeOffsets(items[2].toList()),
-      '0x','0x','0x','0x', 0
+      _decodeRanges(items[2].toList()),
+      _decodeRanges(items[3].toList())//,
+      //'0x','0x','0x','0x'
     );
   }
 
-  function _decodeOffsets(RLPReader.RLPItem[] memory items) private returns(uint32[] memory) {
-    uint32[] memory arr;
+  function _decodeRanges(RLPReader.RLPItem[] memory items) private returns(uint[] memory) {
+    uint[] memory arr;
     for(uint i=0; i<items.length; i++){
-      arr[i] = uint32(items[i].toUint());
+      arr[i] = items[i].toUint();
     }
     return arr;
   }

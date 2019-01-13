@@ -3,9 +3,9 @@ pragma solidity 0.5.0;
 import {BigNumber} from "./BigNumber.sol";
 import {RLPReader} from "../RLPReader.sol";
 
-contract HashToPrime {
+library HashToPrime {
   using RLPReader for bytes;
-  uint public test2;
+  //uint public test2;
 
   function genNonPrimeWitness(uint128 _n) public returns(uint64) {
     // todo
@@ -28,7 +28,7 @@ contract HashToPrime {
       prime = uint64(RLPReader.toUint(_p));
 
       if (isProbablePrime(prime)) {
-        test2 = prime;
+        //test2 = prime;
         return prime;
       }
 
