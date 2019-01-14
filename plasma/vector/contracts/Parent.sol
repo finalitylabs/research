@@ -10,6 +10,8 @@ contract Parent is Ownable {
   using SafeMath for uint256;
   using Decoder for bytes;
 
+  uint64 public p; //testing
+
   uint64 public _amt;
 
   uint256 constant public EXIT_TIMEOUT = 7 days;
@@ -163,9 +165,10 @@ contract Parent is Ownable {
   
   function challengeInvalidExitHTP(uint exitIndex) public {
     bytes memory h_input;
-    h_input = abi.encodePacked(CRS_g, exits[exitIndex].coinsProof.T);
-    bytes32 i = keccak256(h_input);
-    uint64 _B = HashToPrime.hash(i);
+    //h_input = abi.encodePacked(CRS_g, exits[exitIndex].coinsProof.T);
+    //bytes32 i = keccak256(h_input);
+    uint64 _B = HashToPrime.hash(abi.encodePacked(exitIndex));
+    p = _B;
     //require(_B == uint64(exits[exitIndex].coinsProof.B)); // todo bytesToUint64
   }
 

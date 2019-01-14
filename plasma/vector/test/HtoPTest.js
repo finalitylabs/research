@@ -45,9 +45,12 @@ contract('', function(accounts) {
     let amt = await chain._amt()
     console.log(amt.toString())
 
-    res = await chain.challengeInvalidExitHTP('0x03')
+    res = await chain.challengeInvalidExitHTP('0x04')
     let gasUsed = res.receipt.gasUsed
     console.log(gasUsed)
+
+    let p = await chain.p()
+    console.log(p.toString())
   })
 
   it('', async () => {

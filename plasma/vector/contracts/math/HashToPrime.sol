@@ -5,13 +5,12 @@ import {RLPReader} from "../RLPReader.sol";
 
 library HashToPrime {
   using RLPReader for bytes;
-  //uint public test2;
 
   function genNonPrimeWitness(uint128 _n) public returns(uint64) {
     // todo
   }
 
-  function hash(bytes32 input) public returns (uint64){
+  function hash(bytes memory input) public returns (uint64){
     uint j = 0;
     bytes memory h_input;
     bytes32 h_output;
@@ -28,7 +27,6 @@ library HashToPrime {
       prime = uint64(RLPReader.toUint(_p));
 
       if (isProbablePrime(prime)) {
-        //test2 = prime;
         return prime;
       }
 
@@ -99,13 +97,4 @@ library HashToPrime {
     }
     return false;
   }
-
-  // function bytesToUint(bytes32 memory b) public returns (uint256){
-  //   uint256 number;
-  //   for(uint i=0;i<b.length;i++){
-  //     // RLPReader memory _b = RLPReader.toItem(b[i]);
-  //     number = number + _b*(2**(8*(b.length-(i+1))));
-  //   }
-  //   return number;
-  // }
 }
