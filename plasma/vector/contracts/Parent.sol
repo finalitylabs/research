@@ -43,7 +43,8 @@ contract Parent is Ownable {
 
   function submitBlock(bytes memory encoded) public onlyOwner {
     (
-      bytes memory _a,
+      bytes memory _a_i,
+      bytes memory _a_e,
       bytes memory _t,
       bytes memory _r,
       bytes memory _k,
@@ -51,7 +52,8 @@ contract Parent is Ownable {
     ) = Decoder.decodeBlock(encoded);
 
     Decoder.Block memory _block;
-    _block.accumulator = _a;
+    _block.A_i = _a_i;
+    _block.A_e = _a_e;
     _block.blockProof.T = _t;
     _block.blockProof.r = _r;
     _block.blockProof.k = _k;
@@ -157,9 +159,10 @@ contract Parent is Ownable {
     // NI-PoKE* check
     // b^B * h^r = A
     Decoder.Block memory _block = blocks[blockNum];
-    bytes memory A = _block.accumulator;
+    bytes memory A_i = _block.A_i;
+    bytes memory A_e = _block.A_e;
 
-    require(_isContained(A, exitIndex));
+    require(_isContained(A_i, A_e, exitIndex));
   }
 
   
@@ -178,13 +181,13 @@ contract Parent is Ownable {
     // b^B * g^r = A
     Decoder.Block memory _block = blocks[prevBlock];
     Decoder.ExpProof memory _proof = _block.blockProof;
-    bytes memory A_t = _block.accumulator;
+    // bytes memory A_t = _block.A_i;
     // todo _verifyBlock
   }
 
   function challengeInvalidPrime(uint128 index) public {
     // take the index in question, see that it is not in the exit range
-    // do one hash to prime on to see index hashes to prime
+    // do one hash to prime on coin index htp to get prime
     // require exits[exitid].proof contains prime
   }
 
@@ -201,7 +204,8 @@ contract Parent is Ownable {
 
   // Utils
 
-  function _isContained(bytes memory _accumulator, uint exitIndex) internal returns(bool) {
+  // check coin proof
+  function _isContained(bytes memory _A_i, bytes memory _A_e, uint exitIndex) internal returns(bool) {
     bytes memory b = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.k, CRS_N);
     BigNumber.instance memory _b;
     _b.val = BigNumber.modexp(b, exits[exitIndex].coinsProof.B, CRS_N);
@@ -215,6 +219,7 @@ contract Parent is Ownable {
     //return _accumulator == _z.val; //todo byte compare large numbers
   }
 
+  // check block update proof
   function _verifyBlock(bytes memory _prevAccum, uint _blockNum) internal returns(bool) {
     bytes memory b = BigNumber.modexp(_prevAccum, blocks[_blockNum].blockProof.k, CRS_N);
     BigNumber.instance memory _b;

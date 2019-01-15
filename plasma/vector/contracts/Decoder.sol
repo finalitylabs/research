@@ -24,7 +24,8 @@ library Decoder {
   }
 
   struct Block {
-    bytes accumulator;
+    bytes A_i; // inclusion bit accumulator
+    bytes A_e; // exclusion bit accumulator
     ExpProof blockProof;
   }
 
@@ -47,7 +48,8 @@ library Decoder {
   }
 
   function decodeBlock(bytes memory rlpBytes) internal returns(
-      bytes memory accumulator,
+      bytes memory A_i,
+      bytes memory A_e,
       bytes memory T,
       bytes memory r,
       bytes memory k,
@@ -57,7 +59,8 @@ library Decoder {
   }
 
   function _decodeBlock(RLPReader.RLPItem[] memory items) private returns(
-    bytes memory accumulator,
+    bytes memory A_i,
+    bytes memory A_e,
     bytes memory T,
     bytes memory r,
     bytes memory k,
@@ -68,8 +71,8 @@ library Decoder {
       bytes memory b,
       bytes memory c,
       bytes memory d
-    ) = _decodeProof(items[1].toList());
-    return(items[0].toBytes(),a,b,c,d);
+    ) = _decodeProof(items[2].toList());
+    return(items[0].toBytes(),items[1].toBytes(),a,b,c,d);
   }
 
   function decodeExit(bytes memory rlpBytes) internal returns(
