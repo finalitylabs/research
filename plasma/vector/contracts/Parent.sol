@@ -15,10 +15,10 @@ contract Parent is Ownable {
   uint64 public _amt;
 
   uint256 constant public EXIT_TIMEOUT = 7 days;
-  uint256 constant public ASSET_DECIMALS_TRUNCATION = 10e13;
+  uint256 constant public ASSET_DECIMALS_TRUNCATION = 10e17;
 
-  bytes constant CRS_g = '0x03';
-  bytes constant CRS_N = '0x1337';
+  bytes public CRS_g;
+  bytes public CRS_N;
   // lowest denom (0.0001 ether), 1 ether = 10,000 coins
 
   mapping(address => bytes32[]) private _depositHashes;
@@ -27,16 +27,18 @@ contract Parent is Ownable {
   mapping(uint => Decoder.Block) blocks;
 
   uint currOffset;
-  uint numExits;
+  uint public numExits;
   uint blockNum;
 
   event Deposit(address indexed depositer, uint64 indexed amount, uint offset);
-  event ExitSubmit();
+  event ExitSubmit(uint indexed time, uint indexed start, address indexed exiter);
   event ExitChallenge();
   event BlockSubmit();
   event BlockChallenge(); // assumes data availability
 
-  constructor() public {
+  constructor(bytes memory _g, bytes memory _N) public {
+    CRS_N = _N;
+    CRS_g = _g;
     currOffset = 0;
     numExits = 0;
   }
@@ -54,6 +56,7 @@ contract Parent is Ownable {
     Decoder.Block memory _block;
     _block.A_i = _a_i;
     _block.A_e = _a_e;
+    // perhaps to optimistic block proposal and don't store proof unless challenged
     _block.blockProof.T = _t;
     _block.blockProof.r = _r;
     _block.blockProof.k = _k;
@@ -84,10 +87,10 @@ contract Parent is Ownable {
   function startExit(bytes memory encoded) public payable {
     (
       address a, //owner,
-      uint32 b, //numRanges,
-      uint256 c, //timeStart,
-      uint[] memory s, // start indicies,
-      uint[] memory d // offsets,
+      uint b, //numRanges,
+      uint c, //timeStart,
+      uint s, // start indicies,
+      uint d // offsets,
       // bytes memory e, // T,
       // bytes memory f, //r,
       // bytes memory g, //k,
@@ -95,7 +98,7 @@ contract Parent is Ownable {
     ) = Decoder.decodeExit(encoded);
     //require(_isContained(_exit.proof));
     // todo add bond check
-    numExits.add(1);
+    numExits = numExits.add(1);
 
     Decoder.Exit memory _exit;
     _exit.timeStart = now;
@@ -103,12 +106,31 @@ contract Parent is Ownable {
     _exit.numRanges = b;
     _exit.starts = s;
     _exit.offsets = d;
+
     // _exit.coinsProof.T = e;
     // _exit.coinsProof.r = f;
     // _exit.coinsProof.k = g;
     // _exit.coinsProof.B = h;
 
     exits[numExits] = _exit; // dont store proof bytes or run inclusion check
+    emit ExitSubmit(now, _exit.starts, msg.sender);
+  }
+
+  function getExit(uint index) public view returns (
+    address owner,
+    uint numRanges,
+    uint timeStart,
+    uint rangeStarts,
+    uint rangeOffsets
+  ){
+    Decoder.Exit memory _exit = exits[index];
+    return (
+      _exit.owner,
+      _exit.numRanges,
+      _exit.timeStart,
+      _exit.starts,
+      _exit.offsets
+    );  
   }
 
   function cancelExit(uint exitIndex) public {
@@ -118,12 +140,18 @@ contract Parent is Ownable {
     numExits = numExits.sub(1);
   }
 
-  function finalizeExit(uint exitIndex) public {
-    require(now > exits[exitIndex].timeStart + EXIT_TIMEOUT);
-    require(exits[exitIndex].challenge == 0);
+  function finalizeExit(uint exitIndex) public payable {
+    //require(now > exits[exitIndex].timeStart + EXIT_TIMEOUT);
+    //require(exits[exitIndex].challenge == 0);
     // todo delete exit anyway if challenge is set
     // delete offsets and refund gas
+    // send ether 
+    Decoder.Exit memory _exit = exits[exitIndex];
     numExits = numExits.sub(1);
+    uint _amt = _exit.offsets.mul(ASSET_DECIMALS_TRUNCATION);
+    address(uint160(_exit.owner)).transfer(_amt);
+    delete exits[exitIndex];
+    delete ranges[msg.sender];
   }
 
   // Challenges
@@ -136,7 +164,7 @@ contract Parent is Ownable {
   function requestExitProof(uint exitIndex) public payable {
     // ask an exit to reveal the inclusion proof, stalling the exit until revealed
     // todo add bond check
-    exits[exitIndex].challenge = 1;
+    //exits[exitIndex].challenge = 1;
   }
 
   function registerInlcusionProof(uint exitIndex, bytes memory proof) public {
@@ -147,11 +175,11 @@ contract Parent is Ownable {
       bytes memory d
     ) = Decoder.decodeProof(proof);
 
-    exits[exitIndex].coinsProof.T = a;
-    exits[exitIndex].coinsProof.r = b;
-    exits[exitIndex].coinsProof.k = c;
-    exits[exitIndex].coinsProof.B = d;
-    exits[exitIndex].challenge = 0;
+    //exits[exitIndex].coinsProof.T = a;
+    //exits[exitIndex].coinsProof.r = b;
+    //exits[exitIndex].coinsProof.k = c;
+    //exits[exitIndex].coinsProof.B = d;
+    //exits[exitIndex].challenge = 0;
   }
 
   function challengeInvalidInclusionProof(uint exitIndex) public {
@@ -206,16 +234,17 @@ contract Parent is Ownable {
 
   // check coin proof
   function _isContained(bytes memory _A_i, bytes memory _A_e, uint exitIndex) internal returns(bool) {
-    bytes memory b = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.k, CRS_N);
-    BigNumber.instance memory _b;
-    _b.val = BigNumber.modexp(b, exits[exitIndex].coinsProof.B, CRS_N);
-    BigNumber.instance memory _r;
-    _r.val = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.r, CRS_N);
-    BigNumber.instance memory _z;
+    // bytes memory b = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.k, CRS_N);
+    // BigNumber.instance memory _b;
+    // _b.val = BigNumber.modexp(b, exits[exitIndex].coinsProof.B, CRS_N);
+    // BigNumber.instance memory _r;
+    // _r.val = BigNumber.modexp(CRS_g, exits[exitIndex].coinsProof.r, CRS_N);
+    // BigNumber.instance memory _z;
 
-    BigNumber.instance memory _N;
-    _N.val = CRS_N;
-    _z = BigNumber.modmul(_b, _r, _N);
+    // BigNumber.instance memory _N;
+    // _N.val = CRS_N;
+    // _z = BigNumber.modmul(_b, _r, _N);
+
     //return _accumulator == _z.val; //todo byte compare large numbers
   }
 

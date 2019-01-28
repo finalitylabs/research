@@ -31,12 +31,12 @@ library Decoder {
 
   struct Exit {
     address owner;
-    uint32 numRanges;
-    uint256 timeStart;
-    uint[] starts;
-    uint[] offsets;
-    ExpProof coinsProof;
-    uint8 challenge; // 1 means this exit is flagged for challenge
+    uint numRanges;
+    uint timeStart;
+    uint starts;
+    uint offsets;
+    //ExpProof coinsProof;
+    //uint8 challenge; // 1 means this exit is flagged for challenge
   }
 
   struct TX {
@@ -77,10 +77,10 @@ library Decoder {
 
   function decodeExit(bytes memory rlpBytes) internal returns(
     address owner,
-    uint32 numRanges,
-    uint256 timeStart,
-    uint[] memory starts,
-    uint[] memory offsets//,
+    uint numRanges,
+    uint timeStart,
+    uint starts,
+    uint offsets//,
     // bytes memory T,
     // bytes memory r,
     // bytes memory k,
@@ -91,10 +91,10 @@ library Decoder {
 
   function _decodeExit(RLPReader.RLPItem[] memory items) private returns(
     address owner,
-    uint32 numRanges,
-    uint256 timeStart,
-    uint[] memory starts,
-    uint[] memory offsets//,
+    uint numRanges,
+    uint timeStart,
+    uint starts,
+    uint offsets//,
     // bytes memory T,
     // bytes memory r,
     // bytes memory k,
@@ -102,10 +102,12 @@ library Decoder {
   ) {
     return(
       msg.sender,
-      uint32(items[0].toUint()),
-      uint256(items[1].toUint()),
-      _decodeRanges(items[2].toList()),
-      _decodeRanges(items[3].toList())//,
+      items[1].toUint(),
+      items[2].toUint(),
+      items[3].toUint(),
+      items[4].toUint()      
+      //_decodeRanges(items[3].toList()),
+      //_decodeRanges(items[4].toList())//,
       //'0x','0x','0x','0x'
     );
   }
